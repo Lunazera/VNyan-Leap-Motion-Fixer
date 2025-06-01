@@ -1,11 +1,26 @@
 ﻿using System;
 using VNyanInterface;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Leap_Motion_Fixer
 {
     public class LeapFixerPlugin : MonoBehaviour
     {
+        /*
+        public string PluginName { get; } = "LeapFixer";
+        public string Version { get; } = "1.0";
+        public string Title { get; } = "Leap Motion Fixer";
+        public string Author { get; } = "Lunazera";
+        public string Website { get; } = "https://github.com/Lunazera/Leap-Motion-Fixer";
+        public void InitializePlugin()
+        {
+            Debug.Log("Initialized!");
+
+        }
+        */
+
+
         IPoseLayer LeapFixer = new LeapFixerLayer();
 
         public string paramNameLayerActive = "LZ_LeapFixerActive";
@@ -19,7 +34,7 @@ namespace Leap_Motion_Fixer
         private bool stateLeftTimeout = false;
         private bool stateRightTimeout = false;
 
-        private float stateTimeout = 500;
+        private float stateTimeout = 500f;
 
         private float timeSinceLostRight = 0f;
         private float timeSinceLostLeft = 0f;
@@ -44,12 +59,15 @@ namespace Leap_Motion_Fixer
             }
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(paramNameSpeed, Speed);
 
-            LeapFixerSettings.setLayerOnOff(0f);
+            LeapFixerLayer.settings.setLayerOnOff(0f);
         }
+        
 
         public void Update()
         {
 
+
+            /*
             // TODO 
             // Fix logic here, clean up and think through this a bit
             // we also want to switch the layer code to get the state info directly
@@ -58,13 +76,13 @@ namespace Leap_Motion_Fixer
             {
                 if ((Time.time - timeSinceLostLeft) > stateTimeout) // if we exceed our timeout
                 {
-                    if (LeapFixerSettings.getLeftStatus() == 0f) // if we find tracking again
+                    if (LeapFixerLayer.settings.getLeftStatus() == 0f) // if we find tracking again
                     {
-                        LeapFixerSettings.setLeftState(1f);
+                        LeapFixerLayer.settings.setLeftState(1f);
                     }
                     else
                     {
-                        LeapFixerSettings.setLeftState(0f);
+                        LeapFixerLayer.settings.setLeftState(0f);
                     }
                     stateLeftTimeout = false;
                 }
@@ -72,27 +90,27 @@ namespace Leap_Motion_Fixer
             else
             {
                 
-                if (LeapFixerSettings.getLeftState() == 0f) // If current state is off
+                if (LeapFixerLayer.settings.getLeftState() == 0f) // If current state is off
                 {
                     // but leap motion is now detected
-                    if (LeapFixerSettings.getLeftStatus() == 1f)
+                    if (LeapFixerLayer.settings.getLeftStatus() == 1f)
                     {
                         // turn state on
-                        LeapFixerSettings.setLeftState(1f);
+                        LeapFixerLayer.settings.setLeftState(1f);
                     }
                     else
                     {
-                        LeapFixerSettings.setLeftState(0f);
+                        LeapFixerLayer.settings.setLeftState(0f);
                     }
                 }
-                else if (LeapFixerSettings.getLeftState() == 1f) // if current state is on + Stable
+                else if (LeapFixerLayer.settings.getLeftState() == 1f) // if current state is on + Stable
                 {
                     // but leap motion is lost
-                    if (LeapFixerSettings.getLeftStatus() == 0f)
+                    if (LeapFixerLayer.settings.getLeftStatus() == 0f)
                     {
                         timeSinceLostLeft = Time.time; // record current timestamp for this side
                         stateLeftTimeout = true; // turn on timeout flag
-                        LeapFixerSettings.setLeftState(2f); // turn on our unstable state
+                        LeapFixerLayer.settings.setLeftState(2f); // turn on our unstable state
                     }
                 }
 
@@ -100,15 +118,15 @@ namespace Leap_Motion_Fixer
 
 
                 // If we ever lose left tracking status
-                if (LeapFixerSettings.getLeftStatus() == 0f)
+                if (LeapFixerLayer.settings.getLeftStatus() == 0f)
                 {
                     timeSinceLostLeft = Time.time; // record current timestamp for this side
                     stateLeftTimeout = true; // turn on timeout flag
-                    LeapFixerSettings.setLeftState(2f); // turn on our unstable state
+                    LeapFixerLayer.settings.setLeftState(2f); // turn on our unstable state
                 }
                 else
                 {
-                    LeapFixerSettings.setLeftState(1f);
+                    LeapFixerLayer.settings.setLeftState(1f);
                 }
             }
 
@@ -116,13 +134,13 @@ namespace Leap_Motion_Fixer
             {
                 if ((Time.time - timeSinceLostRight) > stateTimeout) // if we exceed our timeout
                 {
-                    if (LeapFixerSettings.getRightStatus() == 0f) // if we find tracking again
+                    if (LeapFixerLayer.settings.getRightStatus() == 0f) // if we find tracking again
                     {
-                        LeapFixerSettings.setRightState(1f);
+                        LeapFixerLayer.settings.setRightState(1f);
                     }
                     else
                     {
-                        LeapFixerSettings.setRightState(0f);
+                        LeapFixerLayer.settings.setRightState(0f);
                     }
                     stateRightTimeout = false;
                 }
@@ -130,17 +148,18 @@ namespace Leap_Motion_Fixer
             else
             {
                 // If we ever lose Right tracking status
-                if (LeapFixerSettings.getRightStatus() == 0f)
+                if (LeapFixerLayer.settings.getRightStatus() == 0f)
                 {
                     timeSinceLostRight = Time.time; // record current timestamp for this side
                     stateRightTimeout = true; // turn on timeout flag
-                    LeapFixerSettings.setRightState(2f); // turn on our unstable state
+                    LeapFixerLayer.settings.setRightState(2f); // turn on our unstable state
                 }
                 else
                 {
-                    LeapFixerSettings.setRightState(1f);
+                    LeapFixerLayer.settings.setRightState(1f);
                 }
             }
+            */
 
             // Parameter management //
             // Layer Toggle
@@ -148,14 +167,14 @@ namespace Leap_Motion_Fixer
             if (!(LayerActive_new == LayerActive))
             {
                 LayerActive = LayerActive_new;
-                LeapFixerSettings.setLayerOnOff(LayerActive);
+                LeapFixerLayer.settings.setLayerOnOff(LayerActive);
             }
             // Speed, Slerp Amount
             Speed_new = VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(paramNameSpeed);
             if (!(Speed_new == Speed))
             {
                 Speed = Speed_new;
-                LeapFixerSettings.setSlerpAmount(Speed);
+                LeapFixerLayer.settings.setSlerpAmount(Speed);
             }
         }
     }
