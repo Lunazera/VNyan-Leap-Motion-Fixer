@@ -536,19 +536,53 @@ namespace Leap_Motion_Fixer
             // *  - - we record the last frame's 'current' rotations to our "last leap"
             // */
 
-            //switch(getSettings().getLeftState())
-            //{
-            //    case 0f:
-            //        settings.setCurrentBones(settings.getLeftArmBones(), BoneRotations);
-            //        break;
-            //    case 1f:
+            switch (getSettings().getLeftState())
+            {
+                case 0f:
+                    settings.setLeftArmCurrent(BoneRotations);
+                    break;
+                case 1f:
+                    settings.recordLastLeapLeft();
+                    settings.setLeftArmTarget(BoneRotations);
+                    settings.rotateTowardsTargetLeft(settings.getSlerpAmount());
+                    break;
+                case 2f:
+                    if (settings.getLeftStatus() == 1f)
+                    {
+                        settings.setLeftArmTarget(settings.getLeftArmLastLeap());
+                    }
+                    settings.rotateTowardsTargetLeft(settings.getSlerpAmount2());
+                    break;
+                case 3f:
+                    settings.recordLastLeapLeft();
+                    settings.setLeftArmTarget(BoneRotations);
+                    settings.rotateTowardsTargetLeft(settings.getSlerpAmount2());
+                    break;
+            }
 
-            //        break;
-            //    case 2f:
-            //        break;
-            //    case 3f:
-            //        break;
-            //}
+            switch (getSettings().getLeftState())
+            {
+                case 0f:
+                    settings.setRightArmCurrent(BoneRotations);
+                    break;
+                case 1f:
+                    settings.recordLastLeapRight();
+                    settings.setRightArmTarget(BoneRotations);
+                    settings.rotateTowardsTargetRight(settings.getSlerpAmount());
+                    break;
+                case 2f:
+                    if (settings.getRightStatus() == 1f)
+                    {
+                        settings.setRightArmTarget(settings.getRightArmLastLeap());
+                    }
+                    settings.rotateTowardsTargetRight(settings.getSlerpAmount2());
+                    break;
+                case 3f:
+                    settings.recordLastLeapRight();
+                    settings.setRightArmTarget(BoneRotations);
+                    settings.rotateTowardsTargetRight(settings.getSlerpAmount2());
+                    break;
+            }
 
 
             //// Left Arm //
@@ -577,58 +611,6 @@ namespace Leap_Motion_Fixer
             //    updateTargetBones(settings.getLeftArmBones());
             //    processBoneRotations(settings.getLeftArmBones(), settings.getSlerpAmount2(), 0f);
             //}
-
-            // Left Arm //
-            if (settings.getLeftState() == 0f) // State 0: complete off
-            {
-                settings.setLeftArmCurrent(BoneRotations);
-            }
-            else if (settings.getLeftState() == 1f) // State 1: on
-            {
-                settings.recordLastLeapLeft();
-                settings.setLeftArmTarget(BoneRotations);
-                settings.rotateTowardsTargetLeft(settings.getSlerpAmount());
-            }
-            else if (settings.getLeftState() == 2f) // State 2: on + unstable, paused
-            {
-                if (settings.getLeftStatus() == 1f)
-                {
-                    settings.setLeftArmTarget(settings.getLeftArmLastLeap());
-                }
-                settings.rotateTowardsTargetLeft(settings.getSlerpAmount2());
-            }
-            else if (settings.getLeftState() == 3f) // State 3: on + stabilizing, returning.
-            {
-                settings.recordLastLeapLeft();
-                settings.setLeftArmTarget(BoneRotations);
-                settings.rotateTowardsTargetLeft(settings.getSlerpAmount2());
-            }
-
-            // Right Arm //
-            if (settings.getRightState() == 0f) // State 0: complete off
-            {
-                settings.setRightArmCurrent(BoneRotations);
-            }
-            else if (settings.getRightState() == 1f) // State 1: on
-            {
-                settings.recordLastLeapRight();
-                settings.setRightArmTarget(BoneRotations);
-                settings.rotateTowardsTargetRight(settings.getSlerpAmount());
-            }
-            else if (settings.getRightState() == 2f) // State 2: on + unstable, paused
-            {
-                if (settings.getRightStatus() == 1f)
-                {
-                    settings.setRightArmTarget(settings.getRightArmLastLeap());
-                }
-                settings.rotateTowardsTargetRight(settings.getSlerpAmount2());
-            }
-            else if (settings.getRightState() == 3f) // State 3: on + stabilizing, returning.
-            {
-                settings.recordLastLeapRight();
-                settings.setRightArmTarget(BoneRotations);
-                settings.rotateTowardsTargetRight(settings.getSlerpAmount2());
-            }
 
             //updateBoneRotations(settings.getCurrentBones(), settings.getAllBones());
 
