@@ -10,30 +10,27 @@ namespace Leap_Motion_Fixer
     /// </summary>
     class LeapFixerPlugin : MonoBehaviour
     {
-        [Header("Plugin Settings")]
+        [Header("Main Settings")]
         [SerializeField] private string paramNameLayerActive = "LZ_LeapFixerActive";
-        [SerializeField] private float LayerActive = 1f;
+        private float LayerActive = 1f;
 
-        [SerializeField] private string paramNameSpeed = "LZ_LeapFixer_Speed";
-        [SerializeField] private float Speed = 10f;
-
-        [SerializeField] private string paramNameSpeed2 = "LZ_LeapFixer_Speed2";
-        [SerializeField] private float Speed2 = 10f;
+        [SerializeField] private string paramNameSensitivity = "LZ_LeapFixer_Sensitivity";
+        private float sensitivity = 1f;
 
         [SerializeField] private string paramNameTimeout = "LZ_LeapFixer_Timeout";
-        [SerializeField] private float stateTimeout = 500f;
+        private float timeout = 500f;
 
-        private float StatusL;
-        private float StatusR;
+        [Header("Smoothing Settings")]
+        [SerializeField] private string paramNameSmoothing = "LZ_LeapFixer_Smoothing";
+        private float smoothing = 10f;
 
-        private bool stateLeftTimeout = false;
-        private bool stateRightTimeout = false;
+        [SerializeField] private string paramNameSmoothingUnstable = "LZ_LeapFixer_SmoothingUnstable";
+        private float smoothing2 = 10f;
 
-        private float timeSinceLostRight = 0f;
-        private float timeSinceLostLeft = 0f;
-
+        [SerializeField] private string paramNameBoost = "LZ_LeapFixer_Boost";
+        private float boost = 10f;
+       
         private static LeapFixerLayer LeapFixer = new LeapFixerLayer();
-
 
         /// <summary>
         /// Access to Leap Fixer Layer settings. Runs the getSettings() method from LeapFixer.
@@ -70,7 +67,6 @@ namespace Leap_Motion_Fixer
             return (!(currentValue == LZUIManager.getSettingsDictFloat(paramName)));
         }
 
-
         public void Start()
         {
             if (!Application.isEditor)
@@ -79,13 +75,19 @@ namespace Leap_Motion_Fixer
                 VNyanInterface.VNyanInterface.VNyanAvatar.registerPoseLayer(LeapFixer);
 
                 setInitialValue(paramNameLayerActive, LayerActive);
-                setInitialValue(paramNameSpeed, Speed);
-                setInitialValue(paramNameSpeed2, Speed2);
+                setInitialValue(paramNameTimeout, timeout);
+                setInitialValue(paramNameSensitivity, sensitivity);
+                setInitialValue(paramNameSmoothing, smoothing);
+                setInitialValue(paramNameSmoothingUnstable, smoothing2);
+                setInitialValue(paramNameBoost, boost);
             }
 
             LeapFixerLayer.settings.setLayerOnOff(LayerActive);
-            LeapFixerLayer.settings.setSlerpAmount(Speed);
-            LeapFixerLayer.settings.setSlerpAmount2(Speed2);
+            LeapFixerLayer.settings.setTimeout(timeout);
+            LeapFixerLayer.settings.setSensitivity(sensitivity);
+            LeapFixerLayer.settings.setSlerpAmount(smoothing);
+            LeapFixerLayer.settings.setSlerpAmount2(smoothing2);
+            LeapFixerLayer.settings.setSlerpBoost(boost);
         }
 
         public void Update()
@@ -100,23 +102,34 @@ namespace Leap_Motion_Fixer
                     LayerActive = LZUIManager.getSettingsDictFloat(paramNameLayerActive);
                     getLayerSettings().setLayerOnOff(LayerActive);
                 }
-
-                if (checkForNewValue(paramNameSpeed, Speed))
+                if (checkForNewValue(paramNameTimeout, timeout))
                 {
-                    Speed = LZUIManager.getSettingsDictFloat(paramNameSpeed);
-                    getLayerSettings().setSlerpAmount(Speed);
+                    timeout = LZUIManager.getSettingsDictFloat(paramNameTimeout);
+                    getLayerSettings().setTimeout(timeout);
                 }
 
-                if (checkForNewValue(paramNameSpeed2, Speed2))
+                if (checkForNewValue(paramNameSensitivity, sensitivity))
                 {
-                    Speed2 = LZUIManager.getSettingsDictFloat(paramNameSpeed2);
-                    getLayerSettings().setSlerpAmount2(Speed2);
+                    sensitivity = LZUIManager.getSettingsDictFloat(paramNameSensitivity);
+                    getLayerSettings().setSensitivity(sensitivity);
                 }
 
-                if (checkForNewValue(paramNameTimeout, stateTimeout))
+                if (checkForNewValue(paramNameSmoothing, smoothing))
                 {
-                    stateTimeout = LZUIManager.getSettingsDictFloat(paramNameTimeout);
-                    //getLayerSettings().setSlerpAmount2(stateTimeout);
+                    smoothing = LZUIManager.getSettingsDictFloat(paramNameSmoothing);
+                    getLayerSettings().setSlerpAmount(smoothing);
+                }
+
+                if (checkForNewValue(paramNameSmoothingUnstable, smoothing2))
+                {
+                    smoothing2 = LZUIManager.getSettingsDictFloat(paramNameSmoothingUnstable);
+                    getLayerSettings().setSlerpAmount2(smoothing2);
+                }
+
+                if (checkForNewValue(paramNameBoost, boost))
+                {
+                    boost = LZUIManager.getSettingsDictFloat(paramNameBoost);
+                    getLayerSettings().setTimeout(boost);
                 }
             }
         }

@@ -5,6 +5,8 @@ using System.Runtime;
 using LZQuaternions;
 using UnityEngine;
 using VNyanInterface;
+using static UnityEngine.Random;
+using static UnityEngine.TouchScreenKeyboard;
 
 
 namespace Leap_Motion_Fixer
@@ -15,7 +17,9 @@ namespace Leap_Motion_Fixer
         public static bool layerActive = true; // flag for layer being active or not (when inactive, vnyan will stop reading from the rotations entirely)
         public void setLayerOnOff(float val) => layerActive = (val == 1f) ? true : false;
 
-        // SLERP 1 amount
+        private float timeout = 0f;
+        private float sensitivity = 0f;
+
         private float slerpAmount = 10f;
         private float slerpAmount2 = 5f;
         private float slerpBoost = 0f;
@@ -35,6 +39,8 @@ namespace Leap_Motion_Fixer
         /// </summary>
         /// <param name="val"></param>
         public void setSlerpBoost(float val) => slerpBoost = rescaleInvertSpeed(val/10);
+        public void setTimeout(float val) => timeout = val;
+        public void setSensitivity(float val) => sensitivity = val;
 
         public float getSlerpAmount() => slerpAmount;
         public float getSlerpAmount2() => slerpAmount2;
@@ -221,7 +227,10 @@ namespace Leap_Motion_Fixer
         {
             foreach (int boneNum in BoneList)
             {
-                setCurrentBone(boneNum, Rotations_In[boneNum]);
+                if (Rotations_In.ContainsKey(boneNum)) 
+                {
+                    setCurrentBone(boneNum, Rotations_In[boneNum]);
+                }
             }
         }
 
@@ -229,7 +238,10 @@ namespace Leap_Motion_Fixer
         {
             foreach (int boneNum in BoneList)
             {
-                setTargetBone(boneNum, Rotations_In[boneNum]);
+                if (Rotations_In.ContainsKey(boneNum))
+                {
+                    setTargetBone(boneNum, Rotations_In[boneNum]);
+                }
             }
         }
 
@@ -313,6 +325,10 @@ namespace Leap_Motion_Fixer
         public VNyanVector3 RootPos;
         public VNyanQuaternion RootRot;
 
+        public List<int> LeftArmBones = settings.getLeftArmBones();
+        public List<int> RightArmBones = settings.getRightArmBones();
+        public List<int> AllBones = settings.getAllBones();
+
         VNyanVector3 IPoseLayer.getBonePosition(int i)
         {
             return BonePositions[i];
@@ -349,6 +365,49 @@ namespace Leap_Motion_Fixer
             return settings;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state"></param>
+        /// <param name="status"></param>
+        /// <param name="BoneList"></param>
+        public void LeapStateProcess(float state, float status, List<int> BoneList)
+        {
+            switch (state)
+            {
+                case 0f:
+                    getSettings().setCurrentBones(BoneList, BoneRotations);
+                    break;
+                case 1f:
+                    getSettings().updateLastLeapBones(status, BoneList);
+                    getSettings().setTargetBones(BoneList, BoneRotations);
+                    getSettings().rotateTowardsTarget(BoneList, getSettings().getSlerpAmount(), getSettings().getSlerpBoost());
+                    break;
+                case 2f:
+                    if (status == 1f)
+                    {
+                        getSettings().setTargetBones(BoneList, getSettings().getLastLeapBones());
+                    }
+                    getSettings().rotateTowardsTarget(BoneList, getSettings().getSlerpAmount2(), 0f);
+                    break;
+                case 3f:
+                    getSettings().updateLastLeapBones(status, BoneList);
+                    getSettings().setTargetBones(BoneList, BoneRotations);
+                    getSettings().rotateTowardsTarget(BoneList, getSettings().getSlerpAmount(), 0f);
+                    break;
+            }
+
+            // Apply bones if they exist in bonerotations
+            foreach (int boneNum in BoneList)
+            {
+                if (BoneRotations.ContainsKey(boneNum))
+                {
+                    BoneRotations[boneNum] = getSettings().getCurrentBone(boneNum);
+                }
+            }
+        }
+
+
         public void doUpdate(in PoseLayerFrame LeapFixerFrame)
         {
             BoneRotations = LeapFixerFrame.BoneRotation;
@@ -361,59 +420,8 @@ namespace Leap_Motion_Fixer
             getSettings().getVNyanLeapState();
             getSettings().getVNyanLeapStatus();
 
-            switch (getSettings().getLeftState())
-            {
-                case 0f:
-                    settings.setCurrentBones(settings.getLeftArmBones(), BoneRotations);
-                    break;
-                case 1f:
-                    settings.updateLastLeapBones(settings.getLeftStatus(), settings.getLeftArmBones());
-                    settings.setTargetBones(settings.getLeftArmBones(), BoneRotations);
-                    settings.rotateTowardsTarget(settings.getLeftArmBones(),settings.getSlerpAmount(), 0f);
-                    break;
-                case 2f:
-                    if (settings.getLeftStatus() == 1f)
-                    {
-                        settings.setTargetBones(settings.getLeftArmBones(), settings.getLastLeapBones());
-                    }
-                    settings.rotateTowardsTarget(settings.getLeftArmBones(),settings.getSlerpAmount2(), 0f);
-                    break;
-                case 3f:
-                    settings.updateLastLeapBones(settings.getLeftStatus(), settings.getLeftArmBones());
-                    settings.setTargetBones(settings.getLeftArmBones(), BoneRotations);
-                    settings.rotateTowardsTarget(settings.getLeftArmBones(),settings.getSlerpAmount2(), 0f);
-                    break;
-            }
-
-            switch (getSettings().getRightState())
-            {
-                case 0f:
-                    settings.setCurrentBones(settings.getRightArmBones(), BoneRotations);
-                    break;
-                case 1f:
-                    settings.updateLastLeapBones(settings.getRightStatus(), settings.getRightArmBones());
-                    settings.setTargetBones(settings.getRightArmBones(), BoneRotations);
-                    settings.rotateTowardsTarget(settings.getRightArmBones(), settings.getSlerpAmount(), 0f);
-                    break;
-                case 2f:
-                    if (settings.getRightStatus() == 1f)
-                    {
-                        settings.setTargetBones(settings.getRightArmBones(), settings.getLastLeapBones());
-                    }
-                    settings.rotateTowardsTarget(settings.getRightArmBones(), settings.getSlerpAmount2(), 0f);
-                    break;
-                case 3f:
-                    settings.updateLastLeapBones(settings.getRightStatus(), settings.getRightArmBones());
-                    settings.setTargetBones(settings.getRightArmBones(), BoneRotations);
-                    settings.rotateTowardsTarget(settings.getRightArmBones(), settings.getSlerpAmount2(), 0f);
-                    break;
-            }
-
-            // Apply "current bone" dictionary into pose layer
-            foreach (int boneNum in settings.getAllBones())
-            {
-                BoneRotations[boneNum] = settings.getCurrentBone(boneNum);
-            }
+            LeapStateProcess(getSettings().getLeftState(), getSettings().getLeftStatus(), LeftArmBones);
+            LeapStateProcess(getSettings().getRightState(), getSettings().getRightStatus(), RightArmBones);
         }
     }
 }
