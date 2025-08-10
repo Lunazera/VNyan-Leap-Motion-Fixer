@@ -6,7 +6,7 @@ using System.Text;
 using UnityEngine;
 using VNyanInterface;
 
-namespace VNyanExtra
+namespace LZQuaternions
 {
     public class BoneLists
     {
@@ -26,6 +26,7 @@ namespace VNyanExtra
         public static List<int> MiddleR = new List<int> { 45, 46, 47 };
         public static List<int> RingR = new List<int> { 48, 49, 50 };
         public static List<int> LittleR = new List<int> { 51, 52, 53 };
+
 
         public static List<int> bonesLeftLeg = new List<int> { 1, 3, 5 };
         public static List<int> bonesRightLeg = new List<int> { 2, 4, 6 };
@@ -63,6 +64,8 @@ namespace VNyanExtra
 
             return convertedVector;
         }
+
+
     }
 
     public class QuaternionMethods

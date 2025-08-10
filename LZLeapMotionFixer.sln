@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leap Motion Fixer", "Leap Motion Fixer.csproj", "{DCEAFA3B-0CE0-4B4E-808E-156CC5DAC426}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LZLeapMotionFixer", "LZLeapMotionFixer.csproj", "{DCEAFA3B-0CE0-4B4E-808E-156CC5DAC426}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
