@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime;
 using UnityEngine;
 using VNyanInterface;
@@ -29,7 +30,7 @@ namespace Leap_Motion_Fixer
         public float getSlerpAmount() => slerpAmount;
 
         // SLERP 2 amount
-        private static float slerpAmount2 = 5f;
+        private float slerpAmount2 = 5f;
 
         /// <summary>
         /// Sets the secondary Slerp value
@@ -44,8 +45,8 @@ namespace Leap_Motion_Fixer
         public float getSlerpAmount2() => slerpAmount2;
 
         // Force Smoothing Setting
-        private static bool forceSmoothingL = false;
-        private static bool forceSmoothingR = false;
+        private bool forceSmoothingL = false;
+        private bool forceSmoothingR = false;
         public void setForceSmoothingL(bool state) => forceSmoothingL = state;
         public void setForceSmoothingR(bool state) => forceSmoothingR = state;
 
@@ -149,14 +150,11 @@ namespace Leap_Motion_Fixer
             (int)HumanBodyBones.RightLittleDistal,
         };
 
-        public List<int> getLeftArmBones()
-        {
-            return LeftArm;
-        }
-        public List<int> getRightArmBones()
-        {
-            return RightArm;
-        }
+        private static List<int> AllBones = LeftArm.Concat(RightArm).ToList();
+
+        public List<int> getLeftArmBones() => LeftArm;
+        public List<int> getRightArmBones() => RightArm;
+        public List<int> getAllBones() => AllBones;
 
         /* We keep three dictionaries to maintain our setup
          * "Current" = Internally keeps bone rotations that we will overwrite onto VNyan's bone rotations
@@ -170,6 +168,11 @@ namespace Leap_Motion_Fixer
         private Dictionary<int, VNyanQuaternion> RightArmCurrent = createQuaternionDictionary(RightArm);
         private Dictionary<int, VNyanQuaternion> RightArmTarget = createQuaternionDictionary(RightArm);
         private Dictionary<int, VNyanQuaternion> RightArmLastLeap = createQuaternionDictionary(RightArm);
+
+        private Dictionary<int, VNyanQuaternion> armsCurrent = createQuaternionDictionary(AllBones);
+        private Dictionary<int, VNyanQuaternion> armsTarget = createQuaternionDictionary(AllBones);
+        private Dictionary<int, VNyanQuaternion> armsLastLeap = createQuaternionDictionary(AllBones);
+
 
 
         /* Setters for Target and LastLeap bone rotations
@@ -404,6 +407,20 @@ namespace Leap_Motion_Fixer
             // *  - - we take incoming bone rotations as our target, and rotate current towards
             // *  - - we record the last frame's 'current' rotations to our "last leap"
             // */
+
+            switch(getSettings().getLeftState())
+            {
+                case 0f:
+
+                    break;
+                case 1f:
+                    break;
+                case 2f:
+                    break;
+                case 3f:
+                    break;
+            }
+
 
             // Left Arm //
             if (settings.getLeftState() == 0f) // State 0: complete off
