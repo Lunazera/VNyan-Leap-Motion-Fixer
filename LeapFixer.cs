@@ -16,40 +16,39 @@ namespace Leap_Motion_Fixer
         public void setLayerOnOff(float val) => layerActive = (val == 1f) ? true : false;
 
         // SLERP 1 amount
-        private static float slerpAmount = 10f;
+        private float slerpAmount = 10f;
+        private float slerpAmount2 = 5f;
+        private float slerpBoost = 0f;
 
         /// <summary>
         /// Sets the main Slerp value
         /// </summary>
         /// <param name="val"></param>
-        public void setSlerpAmount(float val) => slerpAmount = val;
-
-        /// <summary>
-        /// Gets the current main Slerp value used for smoothing.
-        /// </summary>
-        /// <returns>float of Slerp amount</returns>
-        public float getSlerpAmount() => slerpAmount;
-
-        // SLERP 2 amount
-        private float slerpAmount2 = 5f;
-
+        public void setSlerpAmount(float val) => slerpAmount = rescaleInvertSpeed(val);
         /// <summary>
         /// Sets the secondary Slerp value
         /// </summary>
         /// <param name="val"></param>
-        public void setSlerpAmount2(float val) => slerpAmount2 = val;
+        public void setSlerpAmount2(float val) => slerpAmount2 = rescaleInvertSpeed(val);
+        /// <summary>
+        /// Sets the slerp boost value
+        /// </summary>
+        /// <param name="val"></param>
+        public void setSlerpBoost(float val) => slerpBoost = rescaleInvertSpeed(val/10);
+
+        public float getSlerpAmount() => slerpAmount;
+        public float getSlerpAmount2() => slerpAmount2;
+        public float getSlerpBoost() => slerpBoost;
 
         /// <summary>
-        /// Gets the current secondary Slerp value used for smoothing.
+        /// Rescale the settings range and inverting the diretion
         /// </summary>
-        /// <returns>float of Slerp amount</returns>
-        public float getSlerpAmount2() => slerpAmount2;
-
-        // Force Smoothing Setting
-        private bool forceSmoothingL = false;
-        private bool forceSmoothingR = false;
-        public void setForceSmoothingL(bool state) => forceSmoothingL = state;
-        public void setForceSmoothingR(bool state) => forceSmoothingR = state;
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public float rescaleInvertSpeed(float value)
+        {
+            return 50f * (1 - value / 100f);
+        }
 
         // States & Statuses
         private float leftState = 0f;
@@ -152,7 +151,6 @@ namespace Leap_Motion_Fixer
         };
 
         private static List<int> AllBones = LeftArm.Concat(RightArm).ToList();
-
         public List<int> getLeftArmBones() => LeftArm;
         public List<int> getRightArmBones() => RightArm;
         public List<int> getAllBones() => AllBones;
@@ -290,23 +288,75 @@ namespace Leap_Motion_Fixer
         }
 
         /// <summary>
-        /// Uses Slerp method to rotate Left arm's Current dictionary rotations towards the target rotations, writing result back into Current dictionary.
+        /// Calculates a multiplier based on the angle between two quaternions and a scale.
         /// </summary>
-        /// <param name="smoothing">float of Slerp amount</param>
-        public void rotateTowardsTargetLeft(float smoothing)
+        /// <param name="qFrom"></param>
+        /// <param name="qTo"></param>
+        /// <param name="adaptiveScale"></param>
+        /// <returns></returns>
+        public float setAdaptiveAngle(Quaternion qFrom, Quaternion qTo, float adaptiveScale)
+        {
+            return adaptiveScale * Quaternion.Angle(qFrom, qTo);
+        }
+
+        /// <summary>
+        /// Applies Quaternion Slerp method, linearly scaling the slerp amount by the angle between the current and target bones.
+        /// </summary>
+        /// <param name="current"></param>
+        /// <param name="target"></param>
+        /// <param name="slerpAmount"></param>
+        /// <param name="adaptiveScale"></param>
+        /// <returns></returns>
+        public VNyanQuaternion adaptiveSlerp(VNyanQuaternion current, VNyanQuaternion target, float slerpAmount, float adaptiveScale)
+        {
+            Quaternion currentUnityQ = QuaternionMethods.convertQuaternionV2U(current);
+            Quaternion targetUnityQ = QuaternionMethods.convertQuaternionV2U(target);
+
+            float angleSpeed = setAdaptiveAngle(currentUnityQ, targetUnityQ, adaptiveScale);
+
+            return QuaternionMethods.convertQuaternionU2V(Quaternion.Slerp(currentUnityQ, targetUnityQ, (slerpAmount + angleSpeed) * Time.deltaTime));
+        }
+
+        public void rotateTowardsLeftTarget( float slerpAmount, float angleScale)
         {
             foreach (int boneNum in getLeftArmBones())
             {
                 VNyanQuaternion target = LeftArmTarget[boneNum];
                 VNyanQuaternion current = LeftArmCurrent[boneNum];
 
-                if (current != target)
+                if ( !(current == target) )
                 {
-                    Quaternion newRotation = Quaternion.Slerp(LZQuaternions.QuaternionMethods.convertQuaternionV2U(current), LZQuaternions.QuaternionMethods.convertQuaternionV2U(target), smoothing * Time.deltaTime);
-                    LeftArmCurrent[boneNum] = LZQuaternions.QuaternionMethods.convertQuaternionU2V(newRotation);
+                    LeftArmCurrent[boneNum] = adaptiveSlerp(current, target, slerpAmount, angleScale);
                 }
             }
         }
+
+        //public void processLeftCurrent(float slerpAmount, float angleScale = 0f)
+        //{
+        //    foreach (int boneNum in getLeftArmBones())
+        //    {
+        //        rotateTowardsLeftTarget(boneNum, slerpAmount, angleScale);
+        //    }
+        //}
+
+        ///// <summary>
+        ///// Uses Slerp method to rotate Left arm's Current dictionary rotations towards the target rotations, writing result back into Current dictionary.
+        ///// </summary>
+        ///// <param name="smoothing">float of Slerp amount</param>
+        //public void rotateTowardsTargetLeft(float smoothing)
+        //{
+        //    foreach (int boneNum in getLeftArmBones())
+        //    {
+        //        VNyanQuaternion target = LeftArmTarget[boneNum];
+        //        VNyanQuaternion current = LeftArmCurrent[boneNum];
+
+        //        if (current != target)
+        //        {
+        //            Quaternion newRotation = Quaternion.Slerp(LZQuaternions.QuaternionMethods.convertQuaternionV2U(current), LZQuaternions.QuaternionMethods.convertQuaternionV2U(target), smoothing * Time.deltaTime);
+        //            LeftArmCurrent[boneNum] = LZQuaternions.QuaternionMethods.convertQuaternionU2V(newRotation);
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Uses Slerp method to rotate Right arm's Current dictionary rotations towards the target rotations, writing result back into Current dictionary.
@@ -544,23 +594,23 @@ namespace Leap_Motion_Fixer
                 case 1f:
                     settings.recordLastLeapLeft();
                     settings.setLeftArmTarget(BoneRotations);
-                    settings.rotateTowardsTargetLeft(settings.getSlerpAmount());
+                    settings.rotateTowardsLeftTarget(settings.getSlerpAmount(), 0f);
                     break;
                 case 2f:
                     if (settings.getLeftStatus() == 1f)
                     {
                         settings.setLeftArmTarget(settings.getLeftArmLastLeap());
                     }
-                    settings.rotateTowardsTargetLeft(settings.getSlerpAmount2());
+                    settings.rotateTowardsLeftTarget(settings.getSlerpAmount2(), 0f);
                     break;
                 case 3f:
                     settings.recordLastLeapLeft();
                     settings.setLeftArmTarget(BoneRotations);
-                    settings.rotateTowardsTargetLeft(settings.getSlerpAmount2());
+                    settings.rotateTowardsLeftTarget(settings.getSlerpAmount2(), 0f);
                     break;
             }
 
-            switch (getSettings().getLeftState())
+            switch (getSettings().getRightState())
             {
                 case 0f:
                     settings.setRightArmCurrent(BoneRotations);
