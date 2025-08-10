@@ -172,9 +172,6 @@ namespace Leap_Motion_Fixer
         private static Dictionary<int, VNyanQuaternion> armsTarget = createQuaternionDictionary(AllBones);
         private static Dictionary<int, VNyanQuaternion> armsLastLeap = createQuaternionDictionary(AllBones);
 
-        /* Setters for Target and LastLeap bone rotations
-         */
-
         public void setCurrentBone(int boneNum, VNyanQuaternion bone)
         {
             LeftArmCurrent[boneNum] = bone;
@@ -190,15 +187,37 @@ namespace Leap_Motion_Fixer
             LeftArmLastLeap[boneNum] = bone;
         }
 
-
-
-        public void setLeftArmCurrent(Dictionary<int, VNyanQuaternion> Rotations_In)
+        public void setCurrentBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
         {
-            foreach (int boneNum in LeftArm)
+            foreach (int boneNum in BoneList)
             {
-                LeftArmCurrent[boneNum] = Rotations_In[boneNum];
+                setCurrentBone(boneNum, Rotations_In[boneNum]);
             }
         }
+
+        public void setTargetBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
+        {
+            foreach (int boneNum in BoneList)
+            {
+                setTargetBone(boneNum, Rotations_In[boneNum]);
+            }
+        }
+
+        public void setLastLeapBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
+        {
+            foreach (int boneNum in BoneList)
+            {
+                setLastLeapBone(boneNum, Rotations_In[boneNum]);
+            }
+        }
+
+
+
+
+        //
+
+
+
         public void setRightArmCurrent(Dictionary<int, VNyanQuaternion> Rotations_In)
         {
             foreach (int boneNum in RightArm)
@@ -206,32 +225,7 @@ namespace Leap_Motion_Fixer
                 RightArmCurrent[boneNum] = Rotations_In[boneNum];
             }
         }
-        public void setLeftArmLastLeap(Dictionary<int, VNyanQuaternion> Rotations_In)
-        {
-            foreach (int boneNum in LeftArm)
-            {
-                LeftArmLastLeap[boneNum] = Rotations_In[boneNum];
-            }
-        }
-        public void setRightArmLastLeap(Dictionary<int, VNyanQuaternion> Rotations_In)
-        {
-            foreach (int boneNum in RightArm)
-            {
-                RightArmLastLeap[boneNum] = Rotations_In[boneNum];
-            }
-        }
-
-        /// <summary>
-        /// Sets the Left arm's target dictionary
-        /// </summary>
-        /// <param name="Rotations_In"></param>
-        public void setLeftArmTarget(Dictionary<int, VNyanQuaternion> Rotations_In)
-        {
-            foreach (int boneNum in LeftArm)
-            {
-                LeftArmTarget[boneNum] = Rotations_In[boneNum];
-            }
-        }
+        
 
         /// <summary>
         /// Sets the Right arm's target dictionary
@@ -281,16 +275,13 @@ namespace Leap_Motion_Fixer
         /// <returns>RightArmTarget</returns>
         public Dictionary<int, VNyanQuaternion> getRightArmTarget() => RightArmTarget;
 
-        /// <summary>
-        /// Record tracking from Current into LastLeap Dict if Left Leap Status is on.
-        /// </summary>
-        public void recordLastLeapLeft()
+        public void updateLastLeapBones(float status, List<int> BoneList)
         {
-            if (getLeftStatus() == 1f)
+            if (status == 1f)
             {
-                foreach (int boneNum in getLeftArmBones())
+                foreach (int boneNum in BoneList)
                 {
-                    LeftArmLastLeap[boneNum] = LeftArmCurrent[boneNum];
+                    setLastLeapBone(boneNum, getCurrentBone(boneNum));
                 }
             }
         }
@@ -593,41 +584,26 @@ namespace Leap_Motion_Fixer
             getSettings().getVNyanLeapState();
             getSettings().getVNyanLeapStatus();
 
-            ///* Logic:
-            // * 0. When it's off, 
-            // * - - we don't do anything to avatar, 
-            // * - - we record where the current bone rotations should be
-            // * 1. When it's On + Stable, 
-            // * - - we take incoming bone rotations as our target, and rotate current towards with tiny smoothing
-            // * - - we record the last frame's 'current' rotations to our "last leap"
-            // * 2. When it's On + Unstable, 
-            // * - - we use the "last leap" as our target, and rotate current towards with slower slerp
-            // * - - we *don't* update "last leap"
-            // * 3. When it's transitioning from unstable to stable
-            // *  - - we take incoming bone rotations as our target, and rotate current towards
-            // *  - - we record the last frame's 'current' rotations to our "last leap"
-            // */
-
             switch (getSettings().getLeftState())
             {
                 case 0f:
-                    settings.setLeftArmCurrent(BoneRotations);
+                    settings.setCurrentBones(settings.getLeftArmBones(), BoneRotations);
                     break;
                 case 1f:
-                    settings.recordLastLeapLeft();
-                    settings.setLeftArmTarget(BoneRotations);
+                    settings.updateLastLeapBones(settings.getLeftStatus(), settings.getLeftArmBones());
+                    settings.setTargetBones(settings.getLeftArmBones(), BoneRotations);
                     settings.rotateTowardsLeftTarget(settings.getSlerpAmount(), 0f);
                     break;
                 case 2f:
                     if (settings.getLeftStatus() == 1f)
                     {
-                        settings.setLeftArmTarget(settings.getLeftArmLastLeap());
+                        settings.setTargetBones(settings.getLeftArmBones(), settings.getLeftArmLastLeap());
                     }
                     settings.rotateTowardsLeftTarget(settings.getSlerpAmount2(), 0f);
                     break;
                 case 3f:
-                    settings.recordLastLeapLeft();
-                    settings.setLeftArmTarget(BoneRotations);
+                    settings.updateLastLeapBones(settings.getLeftStatus(), settings.getLeftArmBones());
+                    settings.setTargetBones(settings.getLeftArmBones(), BoneRotations);
                     settings.rotateTowardsLeftTarget(settings.getSlerpAmount2(), 0f);
                     break;
             }
