@@ -104,6 +104,8 @@ namespace Leap_Motion_Fixer
             }
             return rotDic;
         }
+
+
         
         // Bone Lists
         private static List<int> LeftArm = new List<int>
@@ -150,7 +152,48 @@ namespace Leap_Motion_Fixer
             (int)HumanBodyBones.RightLittleDistal,
         };
 
-        private static List<int> AllBones = LeftArm.Concat(RightArm).ToList();
+        private static List<int> AllBones = new List<int>
+        {   (int)HumanBodyBones.LeftShoulder,
+            (int)HumanBodyBones.LeftUpperArm,
+            (int)HumanBodyBones.LeftLowerArm,
+            (int)HumanBodyBones.LeftHand,
+            (int)HumanBodyBones.LeftThumbProximal,
+            (int)HumanBodyBones.LeftThumbIntermediate,
+            (int)HumanBodyBones.LeftThumbDistal,
+            (int)HumanBodyBones.LeftIndexProximal,
+            (int)HumanBodyBones.LeftIndexIntermediate,
+            (int)HumanBodyBones.LeftIndexDistal,
+            (int)HumanBodyBones.LeftMiddleProximal,
+            (int)HumanBodyBones.LeftMiddleIntermediate,
+            (int)HumanBodyBones.LeftMiddleDistal,
+            (int)HumanBodyBones.LeftRingProximal,
+            (int)HumanBodyBones.LeftRingIntermediate,
+            (int)HumanBodyBones.LeftRingDistal,
+            (int)HumanBodyBones.LeftLittleProximal,
+            (int)HumanBodyBones.LeftLittleIntermediate,
+            (int)HumanBodyBones.LeftLittleDistal,
+            (int)HumanBodyBones.RightShoulder,
+            (int)HumanBodyBones.RightUpperArm,
+            (int)HumanBodyBones.RightLowerArm,
+            (int)HumanBodyBones.RightHand,
+            (int)HumanBodyBones.RightThumbProximal,
+            (int)HumanBodyBones.RightThumbIntermediate,
+            (int)HumanBodyBones.RightThumbDistal,
+            (int)HumanBodyBones.RightIndexProximal,
+            (int)HumanBodyBones.RightIndexIntermediate,
+            (int)HumanBodyBones.RightIndexDistal,
+            (int)HumanBodyBones.RightMiddleProximal,
+            (int)HumanBodyBones.RightMiddleIntermediate,
+            (int)HumanBodyBones.RightMiddleDistal,
+            (int)HumanBodyBones.RightRingProximal,
+            (int)HumanBodyBones.RightRingIntermediate,
+            (int)HumanBodyBones.RightRingDistal,
+            (int)HumanBodyBones.RightLittleProximal,
+            (int)HumanBodyBones.RightLittleIntermediate,
+            (int)HumanBodyBones.RightLittleDistal,
+        };
+
+        //private static List<int> AllBones = LeftArm.Concat(RightArm).ToList();
         public List<int> getLeftArmBones() => LeftArm;
         public List<int> getRightArmBones() => RightArm;
         public List<int> getAllBones() => AllBones;
@@ -174,17 +217,17 @@ namespace Leap_Motion_Fixer
 
         public void setCurrentBone(int boneNum, VNyanQuaternion bone)
         {
-            LeftArmCurrent[boneNum] = bone;
+            armsCurrent[boneNum] = bone;
         }
 
         public void setTargetBone(int boneNum, VNyanQuaternion bone)
         {
-            LeftArmTarget[boneNum] = bone;
+            armsTarget[boneNum] = bone;
         }
 
         public void setLastLeapBone(int boneNum, VNyanQuaternion bone)
         {
-            LeftArmLastLeap[boneNum] = bone;
+            armsLastLeap[boneNum] = bone;
         }
 
         public void setCurrentBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
@@ -203,20 +246,18 @@ namespace Leap_Motion_Fixer
             }
         }
 
-        public void setLastLeapBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
+        public void updateLastLeapBones(float status, List<int> BoneList)
         {
-            foreach (int boneNum in BoneList)
+            if (status == 1f)
             {
-                setLastLeapBone(boneNum, Rotations_In[boneNum]);
+                foreach (int boneNum in BoneList)
+                {
+                    setLastLeapBone(boneNum, getCurrentBone(boneNum));
+                }
             }
         }
 
-
-
-
         //
-
-
 
         public void setRightArmCurrent(Dictionary<int, VNyanQuaternion> Rotations_In)
         {
@@ -243,9 +284,9 @@ namespace Leap_Motion_Fixer
         public VNyanQuaternion getLeftArmCurrentBone(int boneNum) => LeftArmCurrent[boneNum];
         public VNyanQuaternion getRightArmCurrentBone(int boneNum) => RightArmCurrent[boneNum];
 
-        public VNyanQuaternion getCurrentBone(int boneNum) => LeftArmCurrent[boneNum];
-        public VNyanQuaternion getTargetBone(int boneNum) => LeftArmTarget[boneNum];
-        public VNyanQuaternion getLastLeapBone(int boneNum) => LeftArmLastLeap[boneNum];
+        public VNyanQuaternion getCurrentBone(int boneNum) => armsCurrent[boneNum];
+        public VNyanQuaternion getTargetBone(int boneNum) => armsTarget[boneNum];
+        public VNyanQuaternion getLastLeapBone(int boneNum) => armsLastLeap[boneNum];
 
 
         public Dictionary<int, VNyanQuaternion> getLeftArmCurrent() => LeftArmCurrent;
@@ -275,16 +316,7 @@ namespace Leap_Motion_Fixer
         /// <returns>RightArmTarget</returns>
         public Dictionary<int, VNyanQuaternion> getRightArmTarget() => RightArmTarget;
 
-        public void updateLastLeapBones(float status, List<int> BoneList)
-        {
-            if (status == 1f)
-            {
-                foreach (int boneNum in BoneList)
-                {
-                    setLastLeapBone(boneNum, getCurrentBone(boneNum));
-                }
-            }
-        }
+        
 
         /// <summary>
         /// Record tracking from Current into LastLeap Dict if Right Leap Status is on.
@@ -330,7 +362,7 @@ namespace Leap_Motion_Fixer
             return QuaternionMethods.convertQuaternionU2V(Quaternion.Slerp(currentUnityQ, targetUnityQ, (slerpAmount + angleSpeed) * Time.deltaTime));
         }
 
-        public void rotateTowardsLeftTarget( float slerpAmount, float angleScale)
+        public void rotateTowardsLeftTarget(List<int> BoneList, float slerpAmount, float angleScale)
         {
             foreach (int boneNum in getLeftArmBones())
             {
@@ -343,33 +375,6 @@ namespace Leap_Motion_Fixer
                 }
             }
         }
-
-        //public void processLeftCurrent(float slerpAmount, float angleScale = 0f)
-        //{
-        //    foreach (int boneNum in getLeftArmBones())
-        //    {
-        //        rotateTowardsLeftTarget(boneNum, slerpAmount, angleScale);
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Uses Slerp method to rotate Left arm's Current dictionary rotations towards the target rotations, writing result back into Current dictionary.
-        ///// </summary>
-        ///// <param name="smoothing">float of Slerp amount</param>
-        //public void rotateTowardsTargetLeft(float smoothing)
-        //{
-        //    foreach (int boneNum in getLeftArmBones())
-        //    {
-        //        VNyanQuaternion target = LeftArmTarget[boneNum];
-        //        VNyanQuaternion current = LeftArmCurrent[boneNum];
-
-        //        if (current != target)
-        //        {
-        //            Quaternion newRotation = Quaternion.Slerp(LZQuaternions.QuaternionMethods.convertQuaternionV2U(current), LZQuaternions.QuaternionMethods.convertQuaternionV2U(target), smoothing * Time.deltaTime);
-        //            LeftArmCurrent[boneNum] = LZQuaternions.QuaternionMethods.convertQuaternionU2V(newRotation);
-        //        }
-        //    }
-        //}
 
         /// <summary>
         /// Uses Slerp method to rotate Right arm's Current dictionary rotations towards the target rotations, writing result back into Current dictionary.
@@ -389,53 +394,6 @@ namespace Leap_Motion_Fixer
                 }
             }
         }
-
-
-        ///* Setters for Target and LastLeap bone rotations
-        // */
-        //public void setCurrentBone(int boneNum, VNyanQuaternion bone)
-        //{
-        //    armsCurrent[boneNum] = bone;
-        //}
-
-        //public void setTargetBone(int boneNum, VNyanQuaternion bone)
-        //{
-        //    armsTarget[boneNum] = bone;
-        //}
-
-        //public void setLastLeapBone(int boneNum, VNyanQuaternion bone)
-        //{
-        //    armsLastLeap[boneNum] = bone;
-        //}
-
-
-        //public void setCurrentBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
-        //{
-        //    foreach (int boneNum in BoneList)
-        //    {
-        //        armsCurrent[boneNum] = Rotations_In[boneNum];
-        //    }
-        //}
-
-        //public void setLastLeapBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
-        //{
-        //    foreach (int boneNum in BoneList)
-        //    {
-        //        armsLastLeap[boneNum] = Rotations_In[boneNum];
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Sets the Left arm's target dictionary
-        ///// </summary>
-        ///// <param name="Rotations_In"></param>
-        //public void setTargetBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
-        //{
-        //    foreach (int boneNum in BoneList)
-        //    {
-        //        setTargetBone(boneNum, Rotations_In[boneNum]);
-        //    }
-        //}
 
         //// Getters
         //public VNyanQuaternion getCurrentBone(int boneNum) => armsCurrent[boneNum];
@@ -592,19 +550,19 @@ namespace Leap_Motion_Fixer
                 case 1f:
                     settings.updateLastLeapBones(settings.getLeftStatus(), settings.getLeftArmBones());
                     settings.setTargetBones(settings.getLeftArmBones(), BoneRotations);
-                    settings.rotateTowardsLeftTarget(settings.getSlerpAmount(), 0f);
+                    settings.rotateTowardsLeftTarget(settings.getLeftArmBones(),settings.getSlerpAmount(), 0f);
                     break;
                 case 2f:
                     if (settings.getLeftStatus() == 1f)
                     {
                         settings.setTargetBones(settings.getLeftArmBones(), settings.getLeftArmLastLeap());
                     }
-                    settings.rotateTowardsLeftTarget(settings.getSlerpAmount2(), 0f);
+                    settings.rotateTowardsLeftTarget(settings.getLeftArmBones(),settings.getSlerpAmount2(), 0f);
                     break;
                 case 3f:
                     settings.updateLastLeapBones(settings.getLeftStatus(), settings.getLeftArmBones());
                     settings.setTargetBones(settings.getLeftArmBones(), BoneRotations);
-                    settings.rotateTowardsLeftTarget(settings.getSlerpAmount2(), 0f);
+                    settings.rotateTowardsLeftTarget(settings.getLeftArmBones(),settings.getSlerpAmount2(), 0f);
                     break;
             }
 
@@ -632,40 +590,12 @@ namespace Leap_Motion_Fixer
                     break;
             }
 
-
-            //// Left Arm //
-            //if (settings.getLeftState() == 0f) // State 0: complete off
-            //{
-            //    settings.setCurrentBones(settings.getLeftArmBones(), BoneRotations);
-            //}
-            //else if (settings.getLeftState() == 1f) // State 1: on
-            //{
-            //    settings.setLastLeapBones(settings.getLeftArmBones(), settings.getCurrentBones());
-            //    updateTargetBones(settings.getLeftArmBones());
-            //    processBoneRotations(settings.getLeftArmBones(), settings.getSlerpAmount(), 0f);
-            //}
-            //else if (settings.getLeftState() == 2f) // State 2: on + unstable, paused
-            //{
-            //    if (settings.getLeftStatus() == 1f)
-            //    {
-            //        settings.setTargetBones(settings.getLeftArmBones(), settings.getLastLeapBones());
-            //    }
-
-            //    processBoneRotations(settings.getLeftArmBones(), settings.getSlerpAmount2(), 0f);
-            //}
-            //else if (settings.getLeftState() == 3f ) // State 3: on + stabilizing, returning.
-            //{
-            //    settings.setTargetBones(settings.getLeftArmBones(), settings.getCurrentBones());
-            //    updateTargetBones(settings.getLeftArmBones());
-            //    processBoneRotations(settings.getLeftArmBones(), settings.getSlerpAmount2(), 0f);
-            //}
-
             //updateBoneRotations(settings.getCurrentBones(), settings.getAllBones());
 
             // Apply "current bone" dictionary into pose layer
             foreach (int boneNum in settings.getLeftArmBones())
             {
-                BoneRotations[boneNum] = settings.getLeftArmCurrentBone(boneNum);
+                BoneRotations[boneNum] = settings.getCurrentBone(boneNum);
             }
 
             foreach (int boneNum in settings.getRightArmBones())
