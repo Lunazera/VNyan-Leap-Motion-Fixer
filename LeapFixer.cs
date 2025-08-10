@@ -174,6 +174,24 @@ namespace Leap_Motion_Fixer
 
         /* Setters for Target and LastLeap bone rotations
          */
+
+        public void setCurrentBone(int boneNum, VNyanQuaternion bone)
+        {
+            LeftArmCurrent[boneNum] = bone;
+        }
+
+        public void setTargetBone(int boneNum, VNyanQuaternion bone)
+        {
+            LeftArmTarget[boneNum] = bone;
+        }
+
+        public void setLastLeapBone(int boneNum, VNyanQuaternion bone)
+        {
+            LeftArmLastLeap[boneNum] = bone;
+        }
+
+
+
         public void setLeftArmCurrent(Dictionary<int, VNyanQuaternion> Rotations_In)
         {
             foreach (int boneNum in LeftArm)
@@ -230,6 +248,10 @@ namespace Leap_Motion_Fixer
         // Getters
         public VNyanQuaternion getLeftArmCurrentBone(int boneNum) => LeftArmCurrent[boneNum];
         public VNyanQuaternion getRightArmCurrentBone(int boneNum) => RightArmCurrent[boneNum];
+
+        public VNyanQuaternion getCurrentBone(int boneNum) => LeftArmCurrent[boneNum];
+        public VNyanQuaternion getTargetBone(int boneNum) => LeftArmTarget[boneNum];
+        public VNyanQuaternion getLastLeapBone(int boneNum) => LeftArmLastLeap[boneNum];
 
 
         public Dictionary<int, VNyanQuaternion> getLeftArmCurrent() => LeftArmCurrent;
@@ -321,12 +343,12 @@ namespace Leap_Motion_Fixer
         {
             foreach (int boneNum in getLeftArmBones())
             {
-                VNyanQuaternion target = LeftArmTarget[boneNum];
-                VNyanQuaternion current = LeftArmCurrent[boneNum];
+                VNyanQuaternion target = getTargetBone(boneNum);
+                VNyanQuaternion current = getCurrentBone(boneNum);
 
                 if ( !(current == target) )
                 {
-                    LeftArmCurrent[boneNum] = adaptiveSlerp(current, target, slerpAmount, angleScale);
+                    setCurrentBone(boneNum, adaptiveSlerp(current, target, slerpAmount, angleScale));
                 }
             }
         }
