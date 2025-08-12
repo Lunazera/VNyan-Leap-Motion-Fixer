@@ -5,10 +5,6 @@ using System.Runtime;
 using LZQuaternions;
 using UnityEngine;
 using VNyanInterface;
-using static Leap_Motion_Fixer.LeapFixerLayer;
-using static UnityEngine.Random;
-using static UnityEngine.TouchScreenKeyboard;
-
 
 namespace Leap_Motion_Fixer
 {
@@ -27,15 +23,22 @@ namespace Leap_Motion_Fixer
         private float slerpAmount2 = 5f;
         private float slerpBoost = 0f;
 
+        // States & Statuses
+        private float leftState = 0f;
+        private float leftStatus = 0f;
+        private float rightState = 0f;
+        private float rightStatus = 0f;
+        private float mirror = 0f;
+
+        private float leftStatusTimer = 0f;
+        private float rightStatusTimer = 0f;
+
         /// <summary>
-        /// Rescale the settings range and inverting the diretion
+        /// Rescale the settings range and inverting the direction. Is expecting incoming value is between 0 and 100.
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public float rescaleInvertSpeed(float value, float newScale)
-        {
-            return newScale * (1 - value / 100f);
-        }
+        public float rescaleInvertSpeed(float value, float newScale) => 50f * (1 - value / 100f);
 
         /// <summary>
         /// Sets the main Slerp value
@@ -65,19 +68,6 @@ namespace Leap_Motion_Fixer
         public float getTransitionTime() => transitionTime / 1000f;
         public float getSensitivity() => sensitivity;
 
-        
-
-        // States & Statuses
-        private float leftState = 0f;
-        private float leftStatus = 0f;
-        private float rightState = 0f;
-        private float rightStatus = 0f;
-        private float mirror = 0f;
-
-        private float leftStatusTimer = 0f;
-        private float rightStatusTimer = 0f;
-
-
         // Mirror set
         public void setMirror(float val) => mirror = val;
         // Left Sets
@@ -97,8 +87,8 @@ namespace Leap_Motion_Fixer
         public float getLeftStatusTimer() => leftStatusTimer;
         public float getRightStatusTimer() => rightStatusTimer;
 
-        public void increaseLeftStatusTimer(float var) => leftStatusTimer += (var);
-        public void increaseRightStatusTimer(float var) => rightStatusTimer += (var);
+        public void increaseLeftStatusTimer(float var) => leftStatusTimer += var;
+        public void increaseRightStatusTimer(float var) => rightStatusTimer += var;
 
         public void resetLeftStatusTimer() => leftStatusTimer = 0f;
         public void resetRightStatusTimer() => rightStatusTimer = 0f;
@@ -289,35 +279,6 @@ namespace Leap_Motion_Fixer
         /// <returns>LeftArmLastLeap</returns>
         public Dictionary<int, VNyanQuaternion> getLastLeapBones() => armsLastLeap;
 
-        /// <summary>
-        /// Calculates a multiplier based on the angle between two quaternions and a scale.
-        /// </summary>
-        /// <param name="qFrom"></param>
-        /// <param name="qTo"></param>
-        /// <param name="adaptiveScale"></param>
-        /// <returns></returns>
-        public float setAdaptiveAngle(Quaternion qFrom, Quaternion qTo, float adaptiveScale)
-        {
-            return adaptiveScale * Quaternion.Angle(qFrom, qTo);
-        }
-
-        /// <summary>
-        /// Applies Quaternion Slerp method, linearly scaling the slerp amount by the angle between the current and target bones.
-        /// </summary>
-        /// <param name="current"></param>
-        /// <param name="target"></param>
-        /// <param name="slerpAmount"></param>
-        /// <param name="adaptiveScale"></param>
-        /// <returns></returns>
-        public VNyanQuaternion adaptiveSlerp(VNyanQuaternion current, VNyanQuaternion target, float slerpAmount, float adaptiveScale)
-        {
-            Quaternion currentUnityQ = QuaternionMethods.convertQuaternionV2U(current);
-            Quaternion targetUnityQ = QuaternionMethods.convertQuaternionV2U(target);
-
-            float angleSpeed = setAdaptiveAngle(currentUnityQ, targetUnityQ, adaptiveScale);
-
-            return QuaternionMethods.convertQuaternionU2V(Quaternion.Slerp(currentUnityQ, targetUnityQ, (slerpAmount + angleSpeed) * Time.deltaTime));
-        }
 
         public void rotateTowardsTarget(List<int> BoneList, float slerpAmount, float angleScale)
         {
@@ -328,7 +289,7 @@ namespace Leap_Motion_Fixer
 
                 if (!(current == target))
                 {
-                    setCurrentBone(boneNum, adaptiveSlerp(current, target, slerpAmount, 0f));
+                    setCurrentBone(boneNum, LZQuaternions.QuaternionMethods.adaptiveSlerp(current, target, slerpAmount, angleScale));
                 }
             }
         }
@@ -409,7 +370,7 @@ namespace Leap_Motion_Fixer
             public override void setTargetDict(PoseLayerFrame Frame) => settings.setTargetBones(getBoneList(), Frame.BoneRotation);
             public override void setTargetDictLastLeap() => settings.setTargetBones(getBoneList(), settings.getLastLeapBones());
             public override void updateLastLeapDict() => settings.updateLastLeapBones(getStatus(), getBoneList());
-            public override void rotateTowardsTarget(float slerp, float boost) => settings.rotateTowardsTarget(getBoneList(), slerp, boost);
+            public override void rotateTowardsTarget() => settings.rotateTowardsTarget(getBoneList(), getSlerp(), getSlerpBoost());
 
             public override float getSlerp() => settings.getSlerpAmount();
             public override float getSlerpUnstable() => settings.getSlerpAmount2();
@@ -461,9 +422,6 @@ namespace Leap_Motion_Fixer
 
             RightStateManager.ManageState(LeapFixerFrame);
             RightStateManager.setStateVNyan("LZ_LeapFixer_RightStateManager");
-
-            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("leapfixer_lefttimer", getSettings().getLeftStatusTimer());
-            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("leapfixer_righttimer", getSettings().getRightStatusTimer());
 
             // Apply bones if they exist in bonerotations
             updateBoneRotations(LeftArmBones);

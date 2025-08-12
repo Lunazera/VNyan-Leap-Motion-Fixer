@@ -34,7 +34,7 @@ namespace Leap_Motion_Fixer
         public virtual void setTargetDict(PoseLayerFrame Frame) { }
         public virtual void setTargetDictLastLeap() { }
         public virtual void updateLastLeapDict() { }
-        public virtual void rotateTowardsTarget(float slerp, float boost) { }
+        public virtual void rotateTowardsTarget() { }
 
 
         // States
@@ -48,21 +48,21 @@ namespace Leap_Motion_Fixer
         {
             updateLastLeapDict();
             setTargetDict(Frame);
-            rotateTowardsTarget(getSlerpUnstable(), getSlerpBoost());
+            rotateTowardsTarget();
         }
 
         public virtual void OffStateTransition(PoseLayerFrame Frame)
         {
             updateLastLeapDict();
             setTargetDict(Frame);
-            rotateTowardsTarget(getSlerpUnstable(), getSlerpBoost());
+            rotateTowardsTarget();
         }
 
         public void OnState(PoseLayerFrame Frame)
         {
             updateLastLeapDict();
             setTargetDict(Frame);
-            rotateTowardsTarget(getSlerp(), getSlerpBoost());
+            rotateTowardsTarget();
         }
 
         public void UnstableState(PoseLayerFrame Frame)
@@ -71,14 +71,14 @@ namespace Leap_Motion_Fixer
             {
                 setTargetDictLastLeap();
             }
-            rotateTowardsTarget(getSlerpUnstable(), 0f);
+            rotateTowardsTarget();
         }
 
         public void RecoveryState(PoseLayerFrame Frame)
         {
             updateLastLeapDict();
             setTargetDict(Frame);
-            rotateTowardsTarget(getSlerpUnstable(), getSlerpBoost());
+            rotateTowardsTarget();
         }
 
 

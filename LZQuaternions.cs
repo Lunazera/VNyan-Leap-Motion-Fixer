@@ -267,7 +267,7 @@ namespace LZQuaternions
         /// </summary>
         /// <param name="qFrom"></param>
         /// <param name="qTo"></param>
-        /// <param name="adaptiveScale"></param>
+        /// <param name="angleScale"></param>
         /// <returns></returns>
         public static float setAdaptiveAngle(Quaternion qFrom, Quaternion qTo, float angleScale)
         {
@@ -280,7 +280,7 @@ namespace LZQuaternions
         /// <param name="current"></param>
         /// <param name="target"></param>
         /// <param name="slerpAmount"></param>
-        /// <param name="adaptiveScale"></param>
+        /// <param name="angleScale"></param>
         /// <returns></returns>
         public static VNyanQuaternion adaptiveSlerp(VNyanQuaternion current, VNyanQuaternion target, float slerpAmount, float angleScale)
         {
