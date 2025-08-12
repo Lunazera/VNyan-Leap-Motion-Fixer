@@ -399,119 +399,6 @@ namespace Leap_Motion_Fixer
                     break;
             }
         }
-
-        public void LeapStateLeft()
-        {
-            switch (getLeftState())
-            {
-                case 0f:
-                    if (getLeftStatus() == 1f)
-                    {
-                        // If status is now on, change state to "On"
-                        setLeftState(1);
-                    }
-                    break;
-                case 1f:
-
-                    if (getVNyanLeftStatusTrack() >= getSensitivity())
-                    {
-                        // If our status tracker has gone above our sensitivity, we'll move to our unstable state
-                        setLeftState(2);
-                    }
-                    else if (getLeftStatus() == 0f)
-                    {
-                        // If status is lost, change state to "Off"
-                        setLeftState(0);
-                    }
-                    break;
-                case 2f:
-                    increaseLeftStatusTimer(Time.deltaTime);
-                    if (getLeftStatusTimer() >= getTimeout())
-                    {
-                        // if we are past our timer amount 
-                        resetLeftStatusTimer();
-                        // when timer elapses
-                        if (getVNyanLeftStatusTrack() < getSensitivity())
-                        {
-                            setLeftState(3);
-                        }
-                    }
-                    break;
-
-                case 3f:
-                    increaseLeftStatusTimer(Time.deltaTime);
-                    if (getLeftStatusTimer() >= getTimeout())
-                    {
-                        resetLeftStatusTimer();
-                        if (getVNyanLeftStatusTrack() < 2f)
-                        {
-                            setLeftState(1);
-                        }
-                        else if (getVNyanLeftStatusTrack() >= getSensitivity())
-                        {
-                            setLeftState(2);
-                        }
-                    }
-                    break;
-            }
-        }
-
-        public void LeapStateRight()
-        {
-            switch (getRightState())
-            {
-                case 0f:
-                    if (getRightStatus() == 1f)
-                    {
-                        // If status is now on, change state to "On"
-                        setRightState(1);
-                    }
-                    break;
-
-                case 1f:
-                    if (getVNyanRightStatusTrack() >= getSensitivity())
-                    {
-                        // If our status tracker has gone above our sensitivity, we'll move to our unstable state
-                        setRightState(2);
-                    }
-                    if (getRightStatus() == 0f)
-                    {
-                        // If status is lost, change state to "Off"
-                        setRightState(0);
-                    }
-                    break;
-
-                case 2f:
-                    increaseRightStatusTimer(Time.deltaTime);
-                    if (getRightStatusTimer() >= getTimeout())
-                    {
-                        // if we are past our timer amount 
-                        resetRightStatusTimer();
-                        // when timer elapses
-                        if (getVNyanRightStatusTrack() < getSensitivity())
-                        {
-                            setRightState(3);
-                        }
-                    }
-                    break;
-
-                case 3f:
-                    increaseRightStatusTimer(Time.deltaTime);
-                    if (getRightStatusTimer() >= getTimeout())
-                    {
-                        resetRightStatusTimer();
-                        if (getVNyanRightStatusTrack() < 2f)
-                        {
-                            setRightState(1);
-                        }
-                        else if (getVNyanRightStatusTrack() >= getSensitivity())
-                        {
-                            setRightState(2);
-                        }
-                    }
-                    break;
-            }
-        }
     }
 
     class LeapFixerLayer : IPoseLayer
@@ -583,27 +470,40 @@ namespace Leap_Motion_Fixer
             }
         }
 
-        public class LeftState : State
+        public abstract class LayerState : State
         {
+            public override void setCurrentDict(PoseLayerFrame Frame) => settings.setCurrentBones(getBoneList(), Frame.BoneRotation);
+            public override void setTargetDict(PoseLayerFrame Frame) => settings.setTargetBones(getBoneList(), Frame.BoneRotation);
+            public override void setTargetDictLastLeap() => settings.setTargetBones(getBoneList(), settings.getLastLeapBones());
+            public override void updateLastLeapDict() => settings.updateLastLeapBones(getStatus(), getBoneList());
+            public override void rotateTowardsTarget(float slerp) => settings.rotateTowardsTarget(getBoneList(), slerp, 0f);
+
+            public override float getSlerp() => settings.getSlerpAmount();
+            public override float getSlerpUnstable() => settings.getSlerpAmount2();
+            public override float getSlerpBoost() => settings.getSlerpBoost();
+            public override float getTimeout() => settings.getTimeout();
             public override float getSensitivity() => settings.getSensitivity();
+        } 
+
+        public class LeftState : LayerState
+        {
+            public override List<int> getBoneList() => settings.getLeftArmBones();
             public override float getState() => settings.getLeftState();
             public override float getStatus() => settings.getLeftStatus();
             public override float getStatusTimer() => settings.getLeftStatusTimer();
             public override float getStatusTrack() => settings.getVNyanLeftStatusTrack();
-            public override float getTimeout() => settings.getTimeout();
             public override void increaseStatusTimer(float time) => settings.increaseLeftStatusTimer(Time.deltaTime);
             public override void resetStatusTimer() => settings.resetLeftStatusTimer();
             public override void setState(float state) => settings.setLeftState(state);
         }
 
-        public class RightState : State
+        public class RightState : LayerState
         {
-            public override float getSensitivity() => settings.getSensitivity();
+            public override List<int> getBoneList() => settings.getRightArmBones();
             public override float getState() => settings.getRightState();
             public override float getStatus() => settings.getRightStatus();
             public override float getStatusTimer() => settings.getRightStatusTimer();
             public override float getStatusTrack() => settings.getVNyanRightStatusTrack();
-            public override float getTimeout() => settings.getTimeout();
             public override void increaseStatusTimer(float time) => settings.increaseRightStatusTimer(Time.deltaTime);
             public override void resetStatusTimer() => settings.resetRightStatusTimer();
             public override void setState(float state) => settings.setRightState(state);
@@ -620,23 +520,16 @@ namespace Leap_Motion_Fixer
             RootPos = LeapFixerFrame.RootPosition;
             RootRot = LeapFixerFrame.RootRotation;
 
-            // getSettings().getVNyanLeapMirror();
-            // getSettings().getVNyanLeapState();
             getSettings().getVNyanLeapStatus();
 
-            // getSettings().LeapStateLeft();
-            // getSettings().LeapStateRight();
-
-            LeftStateManager.ProcessState();
+            LeftStateManager.ManageState(LeapFixerFrame);
             LeftStateManager.setStateVNyan("LZ_LeapFixer_LeftStateManager");
 
-            RightStateManager.ProcessState();
+            RightStateManager.ManageState(LeapFixerFrame);
             RightStateManager.setStateVNyan("LZ_LeapFixer_RightStateManager");
 
-            
-
-            getSettings().LeapStateProcess(getSettings().getLeftState(), getSettings().getLeftStatus(), LeftArmBones, BoneRotations);
-            getSettings().LeapStateProcess(getSettings().getRightState(), getSettings().getRightStatus(), RightArmBones, BoneRotations);
+            //getSettings().LeapStateProcess(getSettings().getLeftState(), getSettings().getLeftStatus(), LeftArmBones, BoneRotations);
+            //getSettings().LeapStateProcess(getSettings().getRightState(), getSettings().getRightStatus(), RightArmBones, BoneRotations);
 
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("leapfixer_lefttimer", getSettings().getLeftStatusTimer());
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("leapfixer_righttimer", getSettings().getRightStatusTimer());

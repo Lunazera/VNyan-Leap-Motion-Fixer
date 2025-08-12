@@ -8,9 +8,15 @@ namespace Leap_Motion_Fixer
 {
     public abstract class State : ILeapState
     {
-        public abstract float getSensitivity();
+        public abstract List<int> getBoneList();
         public abstract float getState();
         public abstract float getStatus();
+        public abstract float getSensitivity();
+
+        public abstract float getSlerp();
+        public abstract float getSlerpUnstable();
+        public abstract float getSlerpBoost();
+
         public abstract float getStatusTimer();
         public abstract float getStatusTrack();
         public abstract float getTimeout();
@@ -24,11 +30,52 @@ namespace Leap_Motion_Fixer
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(ParamName, getState());
         }
 
-        public void ProcessState()
+        public virtual void setCurrentDict(PoseLayerFrame Frame) { }
+        public virtual void setTargetDict(PoseLayerFrame Frame) { }
+        public virtual void setTargetDictLastLeap() { }
+        public virtual void updateLastLeapDict() { }
+        public virtual void rotateTowardsTarget(float slerp) { }
+
+        // States
+
+        public void OffState(PoseLayerFrame Frame)
+        {
+            setCurrentDict(Frame);
+        }
+
+        public virtual void OnOffTransitionState(PoseLayerFrame Frame) { }
+
+        public void OnState(PoseLayerFrame Frame)
+        {
+            updateLastLeapDict();
+            setTargetDict(Frame);
+            rotateTowardsTarget(getSlerp());
+        }
+
+        public void UnstableState(PoseLayerFrame Frame)
+        {
+            if (getStatus() == 1f)
+            {
+                setTargetDictLastLeap();
+            }
+            rotateTowardsTarget(getSlerpUnstable());
+        }
+
+        public void RecoveryState(PoseLayerFrame Frame)
+        {
+            updateLastLeapDict();
+            setTargetDict(Frame);
+            rotateTowardsTarget(getSlerpUnstable());
+        }
+
+        // State manager
+
+        public void ManageState(PoseLayerFrame Frame)
         {
             switch (getState())
             {
                 case 0f:
+                    OffState(Frame);
                     if (getStatus() == 1f)
                     {
                         // If status is now on, change state to "On"
@@ -36,7 +83,7 @@ namespace Leap_Motion_Fixer
                     }
                     break;
                 case 1f:
-
+                    OnState(Frame);
                     if (getStatusTrack() >= getSensitivity())
                     {
                         // If our status tracker has gone above our sensitivity, we'll move to our unstable state
@@ -49,6 +96,7 @@ namespace Leap_Motion_Fixer
                     }
                     break;
                 case 2f:
+                    UnstableState(Frame);
                     increaseStatusTimer(Time.deltaTime);
                     if (getStatusTrack() >= getTimeout())
                     {
@@ -63,6 +111,7 @@ namespace Leap_Motion_Fixer
                     break;
 
                 case 3f:
+                    RecoveryState(Frame);
                     increaseStatusTimer(Time.deltaTime);
                     if (getStatusTrack() >= getTimeout())
                     {
