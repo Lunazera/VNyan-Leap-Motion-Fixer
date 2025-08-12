@@ -21,26 +21,40 @@ namespace Leap_Motion_Fixer
         private float timeout = 2000f; // ms, will be divided by 1000
         private float sensitivity = 5f; // number of events
 
+        private float transitionTime = 400f;
+
         private float slerpAmount = 10f;
         private float slerpAmount2 = 5f;
         private float slerpBoost = 0f;
 
         /// <summary>
+        /// Rescale the settings range and inverting the diretion
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public float rescaleInvertSpeed(float value, float newScale)
+        {
+            return newScale * (1 - value / 100f);
+        }
+
+        /// <summary>
         /// Sets the main Slerp value
         /// </summary>
         /// <param name="val"></param>
-        public void setSlerpAmount(float val) => slerpAmount = rescaleInvertSpeed(val);
+        public void setSlerpAmount(float val, float scale) => slerpAmount = rescaleInvertSpeed(val, scale);
         /// <summary>
         /// Sets the secondary Slerp value
         /// </summary>
         /// <param name="val"></param>
-        public void setSlerpAmount2(float val) => slerpAmount2 = rescaleInvertSpeed(val);
+        public void setSlerpAmount2(float val, float scale) => slerpAmount2 = rescaleInvertSpeed(val, scale);
         /// <summary>
         /// Sets the slerp boost value
         /// </summary>
         /// <param name="val"></param>
-        public void setSlerpBoost(float val) => slerpBoost = rescaleInvertSpeed(val / 10);
+        public void setSlerpBoost(float val, float scale) => slerpBoost = val * scale;
+
         public void setTimeout(float val) => timeout = val;
+        public void setTransitionTime(float val) => transitionTime = val;
         public void setSensitivity(float val) => sensitivity = val;
 
         public float getSlerpAmount() => slerpAmount;
@@ -48,17 +62,10 @@ namespace Leap_Motion_Fixer
         public float getSlerpBoost() => slerpBoost;
 
         public float getTimeout() => timeout / 1000f;
+        public float getTransitionTime() => transitionTime / 1000f;
         public float getSensitivity() => sensitivity;
 
-        /// <summary>
-        /// Rescale the settings range and inverting the diretion
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public float rescaleInvertSpeed(float value)
-        {
-            return 50f * (1 - value / 100f);
-        }
+        
 
         // States & Statuses
         private float leftState = 0f;
@@ -95,43 +102,6 @@ namespace Leap_Motion_Fixer
 
         public void resetLeftStatusTimer() => leftStatusTimer = 0f;
         public void resetRightStatusTimer() => rightStatusTimer = 0f;
-
-        //public float getState(int Side)
-        //{
-        //    switch (Side)
-        //    {
-        //        default:
-        //            return getLeftState();
-        //        case 2:
-        //            return getRightState();
-        //    }    
-        //}
-
-        //public void setState(int Side, float val)
-        //{
-        //    switch (Side)
-        //    {
-        //        case 1:
-        //            setLeftState(val);
-        //            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("teststateLeft", val);
-        //            break;
-        //        case 2:
-        //            setRightState(val);
-        //            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("teststateRight", val);
-        //            break;
-        //    }
-        //}
-
-        //VNyan Getters
-        //public void getVNyanLeapMirror()
-        //{
-        //    setMirror(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LeapMirror"));
-        //}
-        //public void getVNyanLeapState()
-        //{
-        //    setLeftState(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixerStateL"));
-        //    setRightState(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixerStateR"));
-        //}
         public void getVNyanLeapStatus()
         {
             setLeftStatus(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LeapStatusL"));
@@ -362,43 +332,6 @@ namespace Leap_Motion_Fixer
                 }
             }
         }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="state"></param>
-        /// <param name="status"></param>
-        /// <param name="BoneList"></param>
-        public void LeapStateProcess(float state, float status, List<int> BoneList, Dictionary<int, VNyanQuaternion> VNyanBoneRotations)
-        {
-            switch (state)
-            {
-                case 0f:
-                    setCurrentBones(BoneList, VNyanBoneRotations);
-                    break;
-
-                case 1f:
-                    updateLastLeapBones(status, BoneList);
-                    setTargetBones(BoneList, VNyanBoneRotations);
-                    rotateTowardsTarget(BoneList, getSlerpAmount(), 0f);
-                    break;
-
-                case 2f:
-                    if (status == 1f)
-                    {
-                        setTargetBones(BoneList, getLastLeapBones());
-                    }
-                    rotateTowardsTarget(BoneList, getSlerpAmount2(), 0f);
-                    break;
-
-                case 3f:
-                    updateLastLeapBones(status, BoneList);
-                    setTargetBones(BoneList, VNyanBoneRotations);
-                    rotateTowardsTarget(BoneList, getSlerpAmount2(), 0f);
-                    break;
-            }
-        }
     }
 
     class LeapFixerLayer : IPoseLayer
@@ -476,13 +409,14 @@ namespace Leap_Motion_Fixer
             public override void setTargetDict(PoseLayerFrame Frame) => settings.setTargetBones(getBoneList(), Frame.BoneRotation);
             public override void setTargetDictLastLeap() => settings.setTargetBones(getBoneList(), settings.getLastLeapBones());
             public override void updateLastLeapDict() => settings.updateLastLeapBones(getStatus(), getBoneList());
-            public override void rotateTowardsTarget(float slerp) => settings.rotateTowardsTarget(getBoneList(), slerp, 0f);
+            public override void rotateTowardsTarget(float slerp, float boost) => settings.rotateTowardsTarget(getBoneList(), slerp, boost);
 
             public override float getSlerp() => settings.getSlerpAmount();
             public override float getSlerpUnstable() => settings.getSlerpAmount2();
             public override float getSlerpBoost() => settings.getSlerpBoost();
             public override float getTimeout() => settings.getTimeout();
             public override float getSensitivity() => settings.getSensitivity();
+            public override float getTransitionTime() => settings.getTransitionTime();
         } 
 
         public class LeftState : LayerState
@@ -527,9 +461,6 @@ namespace Leap_Motion_Fixer
 
             RightStateManager.ManageState(LeapFixerFrame);
             RightStateManager.setStateVNyan("LZ_LeapFixer_RightStateManager");
-
-            //getSettings().LeapStateProcess(getSettings().getLeftState(), getSettings().getLeftStatus(), LeftArmBones, BoneRotations);
-            //getSettings().LeapStateProcess(getSettings().getRightState(), getSettings().getRightStatus(), RightArmBones, BoneRotations);
 
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("leapfixer_lefttimer", getSettings().getLeftStatusTimer());
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("leapfixer_righttimer", getSettings().getRightStatusTimer());

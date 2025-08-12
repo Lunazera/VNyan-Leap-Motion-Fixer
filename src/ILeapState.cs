@@ -15,6 +15,7 @@ namespace Leap_Motion_Fixer
         public float getStatusTimer();
         public float getTimeout();
         public float getSensitivity();
+        public float getTransitionTime();
 
         public float getSlerp();
         public float getSlerpUnstable();
@@ -31,10 +32,11 @@ namespace Leap_Motion_Fixer
         public void setTargetDict() { }
         public void setTargetDictLastLeap() { }
         public void updateLastLeapDict() { }
-        public void rotateTowardsTarget() { }
+        public void rotateTowardsTarget(float slerp, float boost) { }
 
         public void OffState(PoseLayerFrame Frame);
-        public void OnOffTransitionState(PoseLayerFrame Frame);
+        public void OnStateTransition(PoseLayerFrame Frame);
+        public void OffStateTransition(PoseLayerFrame Frame);
         public void OnState(PoseLayerFrame Frame);
         public void UnstableState(PoseLayerFrame Frame);
         public void RecoveryState(PoseLayerFrame Frame);

@@ -20,16 +20,22 @@ namespace Leap_Motion_Fixer
         [SerializeField] private string paramNameTimeout = "LZ_LeapFixer_Timeout";
         private float timeout = 500f;
 
+        [SerializeField] private string paramNameTransitionTime = "LZ_LeapFixer_TransitionTime";
+        private float transitionTime = 500f;
+
         [Header("Smoothing Settings")]
         [SerializeField] private string paramNameSmoothing = "LZ_LeapFixer_Smoothing";
         private float smoothing = 10f;
-
         [SerializeField] private string paramNameSmoothingUnstable = "LZ_LeapFixer_SmoothingUnstable";
         private float smoothing2 = 10f;
+        [Tooltip("New scale for Smoothing slider (rescales 0-100 slider -> value-0)")]
+        [SerializeField] private float smoothingScale = 10f;
 
         [SerializeField] private string paramNameBoost = "LZ_LeapFixer_Boost";
         private float boost = 10f;
-       
+        [Tooltip("Scale for Boost slider (Should be small, like < 0.1f)")]
+        [SerializeField] private float boostScale = 0.01f;
+
         private static LeapFixerLayer LeapFixer = new LeapFixerLayer();
 
         /// <summary>
@@ -76,6 +82,7 @@ namespace Leap_Motion_Fixer
 
                 setInitialValue(paramNameLayerActive, LayerActive);
                 setInitialValue(paramNameTimeout, timeout);
+                setInitialValue(paramNameTransitionTime, transitionTime);
                 setInitialValue(paramNameSensitivity, sensitivity);
                 setInitialValue(paramNameSmoothing, smoothing);
                 setInitialValue(paramNameSmoothingUnstable, smoothing2);
@@ -84,10 +91,11 @@ namespace Leap_Motion_Fixer
 
             LeapFixerLayer.settings.setLayerOnOff(LayerActive);
             LeapFixerLayer.settings.setTimeout(timeout);
+            LeapFixerLayer.settings.setTransitionTime(transitionTime);
             LeapFixerLayer.settings.setSensitivity(sensitivity);
-            LeapFixerLayer.settings.setSlerpAmount(smoothing);
-            LeapFixerLayer.settings.setSlerpAmount2(smoothing2);
-            LeapFixerLayer.settings.setSlerpBoost(boost);
+            LeapFixerLayer.settings.setSlerpAmount(smoothing, smoothingScale);
+            LeapFixerLayer.settings.setSlerpAmount2(smoothing2, smoothingScale);
+            LeapFixerLayer.settings.setSlerpBoost(boost, boostScale);
         }
 
         public void Update()
@@ -102,10 +110,17 @@ namespace Leap_Motion_Fixer
                     LayerActive = LZUIManager.getSettingsDictFloat(paramNameLayerActive);
                     getLayerSettings().setLayerOnOff(LayerActive);
                 }
+
                 if (checkForNewValue(paramNameTimeout, timeout))
                 {
                     timeout = LZUIManager.getSettingsDictFloat(paramNameTimeout);
                     getLayerSettings().setTimeout(timeout);
+                }
+
+                if (checkForNewValue(paramNameTransitionTime, transitionTime))
+                {
+                    transitionTime = LZUIManager.getSettingsDictFloat(paramNameTransitionTime);
+                    getLayerSettings().setTransitionTime(transitionTime);
                 }
 
                 if (checkForNewValue(paramNameSensitivity, sensitivity))
@@ -117,19 +132,19 @@ namespace Leap_Motion_Fixer
                 if (checkForNewValue(paramNameSmoothing, smoothing))
                 {
                     smoothing = LZUIManager.getSettingsDictFloat(paramNameSmoothing);
-                    getLayerSettings().setSlerpAmount(smoothing);
+                    getLayerSettings().setSlerpAmount(smoothing, smoothingScale);
                 }
 
                 if (checkForNewValue(paramNameSmoothingUnstable, smoothing2))
                 {
                     smoothing2 = LZUIManager.getSettingsDictFloat(paramNameSmoothingUnstable);
-                    getLayerSettings().setSlerpAmount2(smoothing2);
+                    getLayerSettings().setSlerpAmount2(smoothing2, smoothingScale);
                 }
 
                 if (checkForNewValue(paramNameBoost, boost))
                 {
                     boost = LZUIManager.getSettingsDictFloat(paramNameBoost);
-                    getLayerSettings().setTimeout(boost);
+                    getLayerSettings().setSlerpBoost(boost, boostScale);
                 }
             }
         }
