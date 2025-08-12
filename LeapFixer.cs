@@ -18,7 +18,8 @@ namespace Leap_Motion_Fixer
         public void setLayerOnOff(float val) => layerActive = (val == 1f) ? true : false;
 
         private float timeout = 0f;
-        private float sensitivity = 0f;
+        private float timeWindow = 100f; // rolling time window
+        private float sensitivity = 0f; // how many on/off events within time frame
 
         private float slerpAmount = 10f;
         private float slerpAmount2 = 5f;
@@ -46,6 +47,8 @@ namespace Leap_Motion_Fixer
         public float getSlerpAmount2() => slerpAmount2;
         public float getSlerpBoost() => slerpBoost;
 
+        public float getSensitivity() => sensitivity;
+
         /// <summary>
         /// Rescale the settings range and inverting the diretion
         /// </summary>
@@ -57,19 +60,23 @@ namespace Leap_Motion_Fixer
         }
 
         // States & Statuses
-        private float leftState = 0f;
+        private int leftState = 0;
         private float leftStatus = 0f;
-        private float rightState = 0f;
+        private int rightState = 0;
         private float rightStatus = 0f;
         private float mirror = 0f;
+
+        private float leftStatusTimer = 0f;
+        private float rightStatusTimer = 0f;
+
 
         // Mirror set
         public void setMirror(float val) => mirror = val;
         // Left Sets
-        public void setLeftState(float val) => leftState = val;
+        public void setLeftState(int val) => leftState = val;
         public void setLeftStatus(float val) => leftStatus = val;
         // Right Sets
-        public void setRightState(float val) => rightState = val;
+        public void setRightState(int val) => rightState = val;
         public void setRightStatus(float val) => rightStatus = val;
         
         // These take into account the mirror setting, so it doesn't need to be handled in VNyan
@@ -79,16 +86,29 @@ namespace Leap_Motion_Fixer
         public float getRightState() => (mirror != 1f) ? rightState : leftState;
         public float getRightStatus() => (mirror != 1f) ? rightStatus : leftStatus;
 
+        public float getLeftStatusTimer() => leftStatusTimer;
+        public float getRightStatusTimer() => rightStatusTimer;
+
+        public float getVNyanLeftStatusTrack()
+        {
+            return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackL");
+        }
+
+        public float getVNyanRightStatusTrack()
+        {
+            return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackR");
+        }
+
         //VNyan Getters
         public void getVNyanLeapMirror()
         {
             setMirror(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapMirror"));
         }
-        public void getVNyanLeapState()
-        {
-            setLeftState(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixerStateL"));
-            setRightState(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixerStateR"));
-        }
+        //public void getVNyanLeapState()
+        //{
+        //    setLeftState(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixerStateL"));
+        //    setRightState(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixerStateR"));
+        //}
         public void getVNyanLeapStatus()
         {
             setLeftStatus(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapStatusL"));
@@ -208,20 +228,11 @@ namespace Leap_Motion_Fixer
         private static Dictionary<int, VNyanQuaternion> armsTarget = createQuaternionDictionary(AllBones);
         private static Dictionary<int, VNyanQuaternion> armsLastLeap = createQuaternionDictionary(AllBones);
 
-        public void setCurrentBone(int boneNum, VNyanQuaternion bone)
-        {
-            armsCurrent[boneNum] = bone;
-        }
+        public void setCurrentBone(int boneNum, VNyanQuaternion bone) => armsCurrent[boneNum] = bone;
 
-        public void setTargetBone(int boneNum, VNyanQuaternion bone)
-        {
-            armsTarget[boneNum] = bone;
-        }
+        public void setTargetBone(int boneNum, VNyanQuaternion bone) => armsTarget[boneNum] = bone;
 
-        public void setLastLeapBone(int boneNum, VNyanQuaternion bone)
-        {
-            armsLastLeap[boneNum] = bone;
-        }
+        public void setLastLeapBone(int boneNum, VNyanQuaternion bone) => armsLastLeap[boneNum] = bone;
 
         public void setCurrentBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
         {
@@ -266,36 +277,6 @@ namespace Leap_Motion_Fixer
         /// <returns>LeftArmLastLeap</returns>
         public Dictionary<int, VNyanQuaternion> getLastLeapBones() => armsLastLeap;
 
-        /// <summary>
-        /// Calculates a multiplier based on the angle between two quaternions and a scale.
-        /// </summary>
-        /// <param name="qFrom"></param>
-        /// <param name="qTo"></param>
-        /// <param name="adaptiveScale"></param>
-        /// <returns></returns>
-        public float setAdaptiveAngle(Quaternion qFrom, Quaternion qTo, float adaptiveScale)
-        {
-            return adaptiveScale * Quaternion.Angle(qFrom, qTo);
-        }
-
-        /// <summary>
-        /// Applies Quaternion Slerp method, linearly scaling the slerp amount by the angle between the current and target bones.
-        /// </summary>
-        /// <param name="current"></param>
-        /// <param name="target"></param>
-        /// <param name="slerpAmount"></param>
-        /// <param name="adaptiveScale"></param>
-        /// <returns></returns>
-        public VNyanQuaternion adaptiveSlerp(VNyanQuaternion current, VNyanQuaternion target, float slerpAmount, float adaptiveScale)
-        {
-            Quaternion currentUnityQ = QuaternionMethods.convertQuaternionV2U(current);
-            Quaternion targetUnityQ = QuaternionMethods.convertQuaternionV2U(target);
-
-            float angleSpeed = setAdaptiveAngle(currentUnityQ, targetUnityQ, adaptiveScale);
-
-            return QuaternionMethods.convertQuaternionU2V(Quaternion.Slerp(currentUnityQ, targetUnityQ, (slerpAmount + angleSpeed) * Time.deltaTime));
-        }
-
         public void rotateTowardsTarget(List<int> BoneList, float slerpAmount, float angleScale)
         {
             foreach (int boneNum in BoneList)
@@ -305,7 +286,7 @@ namespace Leap_Motion_Fixer
 
                 if ( !(current == target) )
                 {
-                    setCurrentBone(boneNum, adaptiveSlerp(current, target, slerpAmount, angleScale));
+                    setCurrentBone(boneNum, QuaternionMethods.adaptiveSlerp(current, target, slerpAmount, angleScale));
                 }
             }
         }
@@ -371,29 +352,89 @@ namespace Leap_Motion_Fixer
         /// <param name="state"></param>
         /// <param name="status"></param>
         /// <param name="BoneList"></param>
-        public void LeapStateProcess(float state, float status, List<int> BoneList)
+        public void LeapStateProcess(int state, float status, float statusTrack, float statusTimer, float timeout, List<int> BoneList)
         {
             switch (state)
             {
-                case 0f:
+                case 0: // Tracking is OFF (initial condition)
                     getSettings().setCurrentBones(BoneList, BoneRotations);
+
+                    // State Check and Switch
+                    if (status == 1f)
+                    {
+                        // If status is now on, change state to "On"
+                        getSettings().setLeftState(1);
+                    }
                     break;
-                case 1f:
+
+
+                case 1: // Tracking is ON / running
                     getSettings().updateLastLeapBones(status, BoneList);
                     getSettings().setTargetBones(BoneList, BoneRotations);
                     getSettings().rotateTowardsTarget(BoneList, getSettings().getSlerpAmount(), getSettings().getSlerpBoost());
+
+                    // State Check and Switch
+                    if (statusTrack >= getSettings().getSensitivity())
+                    {
+                        // If our status tracker has gone above our sensitivity, we'll move to our unstable state
+                        getSettings().setLeftState(2);
+                    }
+                    else if (status == 0f)               
+                    {
+                        // If status turns off, simply go back to OFF
+                        getSettings().setLeftState(0);
+                    }
                     break;
-                case 2f:
+
+
+                case 2: // Tracking is UNSTABLE
+                    // We will update our target bones on frames where tracking is on regardless, but not rotate towards them
                     if (status == 1f)
                     {
                         getSettings().setTargetBones(BoneList, getSettings().getLastLeapBones());
                     }
-                    getSettings().rotateTowardsTarget(BoneList, getSettings().getSlerpAmount2(), 0f);
+
+                    if (statusTimer >= timeout)
+                    {
+                        // when timer elapses
+                        if (statusTrack >= getSettings().getSensitivity())
+                        {
+                            // if our status tracker is still showing noise, stay frozen and reset timer
+                            // TODO: RESET TIMER
+                        } 
+                        else
+                        {
+                            // If we're good, lets go to our transition state.
+                            getSettings().setLeftState(3);
+                        }
+                    }
+                    // getSettings().rotateTowardsTarget(BoneList, getSettings().getSlerpAmount2(), 0f);
                     break;
-                case 3f:
+                case 3:
                     getSettings().updateLastLeapBones(status, BoneList);
                     getSettings().setTargetBones(BoneList, BoneRotations);
-                    getSettings().rotateTowardsTarget(BoneList, getSettings().getSlerpAmount(), 0f);
+                    getSettings().rotateTowardsTarget(BoneList, getSettings().getSlerpAmount2(), 0f);
+
+                    // State Check and Switch
+                    if (statusTrack >= getSettings().getSensitivity())
+                    {
+                        // If it gets unstable again we'll go right back to state 2
+                        getSettings().setLeftState(2);
+                        break;
+                    }
+                    else if (statusTimer >= timeout)
+                    {
+                        // if we're all good, go back to normal
+                        if (status == 1f)
+                        {
+                            // If status is now on, change state to "On"
+                            getSettings().setLeftState(1);
+                        } 
+                        else
+                        {
+                            getSettings().setLeftState(0);
+                        }  
+                    }
                     break;
             }
 
@@ -417,11 +458,11 @@ namespace Leap_Motion_Fixer
             RootRot = LeapFixerFrame.RootRotation;
 
             getSettings().getVNyanLeapMirror();
-            getSettings().getVNyanLeapState();
+            //getSettings().getVNyanLeapState();
             getSettings().getVNyanLeapStatus();
 
-            LeapStateProcess(getSettings().getLeftState(), getSettings().getLeftStatus(), LeftArmBones);
-            LeapStateProcess(getSettings().getRightState(), getSettings().getRightStatus(), RightArmBones);
+            //LeapStateProcess(getSettings().getLeftState(), getSettings().getLeftStatus(), LeftArmBones);
+            //LeapStateProcess(getSettings().getRightState(), getSettings().getRightStatus(), RightArmBones);
         }
     }
 }
