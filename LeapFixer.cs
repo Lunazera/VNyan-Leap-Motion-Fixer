@@ -8,14 +8,14 @@ using VNyanInterface;
 
 namespace Leap_Motion_Fixer
 {
-    class LeapFixerSettings
+    public class LeapFixerSettings
     {
         // Layer On/Off Setting
         public static bool layerActive = true; // flag for layer being active or not (when inactive, vnyan will stop reading from the rotations entirely)
         public void setLayerOnOff(float val) => layerActive = (val == 1f) ? true : false;
 
         private float timeout = 2000f; // ms, will be divided by 1000
-        private float sensitivity = 5f; // number of events
+        private float sensitivity = 5f; // number of events until considered unstable
 
         private float transitionTime = 400f;
 
@@ -80,9 +80,9 @@ namespace Leap_Motion_Fixer
         // These take into account the mirror setting, so it doesn't need to be handled in VNyan
         public float getMirror() => mirror;
         public float getLeftState() => leftState;
-        public float getLeftStatus() => leftStatus;
+        public float getLeftStatus() => (mirror != 1f) ? leftStatus : rightStatus;
         public float getRightState() => rightState;
-        public float getRightStatus() => rightStatus;
+        public float getRightStatus() => (mirror != 1f) ? rightStatus : leftStatus;
 
         public float getLeftStatusTimer() => leftStatusTimer;
         public float getRightStatusTimer() => rightStatusTimer;
@@ -94,19 +94,16 @@ namespace Leap_Motion_Fixer
         public void resetRightStatusTimer() => rightStatusTimer = 0f;
         public void getVNyanLeapStatus()
         {
-            setLeftStatus(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LeapStatusL"));
-            setRightStatus(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LeapStatusR"));
+            setLeftStatus(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapStatusL"));
+            setRightStatus(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapStatusR"));
+        }
+        public void getVNyanLeapMirror()
+        {
+            setMirror(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapMirror"));
         }
 
-        public float getVNyanLeftStatusTrack()
-        {
-            return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackL");
-        }
-
-        public float getVNyanRightStatusTrack()
-        {
-            return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackR");
-        }
+        public float getVNyanLeftStatusTrack() => (mirror != 1f) ? VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackL") : VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackR");
+        public float getVNyanRightStatusTrack() => (mirror != 1f) ? VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackR") : VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackL");
 
         /// <summary>
         /// Creates VNyanQuaternion Dictionaries given a list of ints
@@ -297,7 +294,7 @@ namespace Leap_Motion_Fixer
 
     class LeapFixerLayer : IPoseLayer
     {
-        public static LeapFixerSettings settings = new LeapFixerSettings();
+        private LeapFixerSettings settings = new LeapFixerSettings();
 
         // Set up our frame-by-frame information
         public PoseLayerFrame LeapFixerFrame = new PoseLayerFrame();
@@ -309,9 +306,9 @@ namespace Leap_Motion_Fixer
         public VNyanVector3 RootPos;
         public VNyanQuaternion RootRot;
 
-        public List<int> LeftArmBones = settings.getLeftArmBones();
-        public List<int> RightArmBones = settings.getRightArmBones();
-        public List<int> AllBones = settings.getAllBones();
+        //public List<int> LeftArmBones = getSettings().getLeftArmBones();
+        //public List<int> RightArmBones = getSettings().getRightArmBones();
+        //public List<int> AllBones = getSettings().getAllBones();
 
         VNyanVector3 IPoseLayer.getBonePosition(int i)
         {
@@ -364,46 +361,6 @@ namespace Leap_Motion_Fixer
             }
         }
 
-        public abstract class LayerState : State
-        {
-            public override void setCurrentDict(PoseLayerFrame Frame) => settings.setCurrentBones(getBoneList(), Frame.BoneRotation);
-            public override void setTargetDict(PoseLayerFrame Frame) => settings.setTargetBones(getBoneList(), Frame.BoneRotation);
-            public override void setTargetDictLastLeap() => settings.setTargetBones(getBoneList(), settings.getLastLeapBones());
-            public override void updateLastLeapDict() => settings.updateLastLeapBones(getStatus(), getBoneList());
-            public override void rotateTowardsTarget() => settings.rotateTowardsTarget(getBoneList(), getSlerp(), getSlerpBoost());
-
-            public override float getSlerp() => settings.getSlerpAmount();
-            public override float getSlerpUnstable() => settings.getSlerpAmount2();
-            public override float getSlerpBoost() => settings.getSlerpBoost();
-            public override float getTimeout() => settings.getTimeout();
-            public override float getSensitivity() => settings.getSensitivity();
-            public override float getTransitionTime() => settings.getTransitionTime();
-        } 
-
-        public class LeftState : LayerState
-        {
-            public override List<int> getBoneList() => settings.getLeftArmBones();
-            public override float getState() => settings.getLeftState();
-            public override float getStatus() => settings.getLeftStatus();
-            public override float getStatusTimer() => settings.getLeftStatusTimer();
-            public override float getStatusTrack() => settings.getVNyanLeftStatusTrack();
-            public override void increaseStatusTimer(float time) => settings.increaseLeftStatusTimer(Time.deltaTime);
-            public override void resetStatusTimer() => settings.resetLeftStatusTimer();
-            public override void setState(float state) => settings.setLeftState(state);
-        }
-
-        public class RightState : LayerState
-        {
-            public override List<int> getBoneList() => settings.getRightArmBones();
-            public override float getState() => settings.getRightState();
-            public override float getStatus() => settings.getRightStatus();
-            public override float getStatusTimer() => settings.getRightStatusTimer();
-            public override float getStatusTrack() => settings.getVNyanRightStatusTrack();
-            public override void increaseStatusTimer(float time) => settings.increaseRightStatusTimer(Time.deltaTime);
-            public override void resetStatusTimer() => settings.resetRightStatusTimer();
-            public override void setState(float state) => settings.setRightState(state);
-        }
-
         ILeapState LeftStateManager = new LeftState();
         ILeapState RightStateManager = new RightState();
 
@@ -415,17 +372,18 @@ namespace Leap_Motion_Fixer
             RootPos = LeapFixerFrame.RootPosition;
             RootRot = LeapFixerFrame.RootRotation;
 
+            getSettings().getVNyanLeapMirror();
             getSettings().getVNyanLeapStatus();
 
-            LeftStateManager.ManageState(LeapFixerFrame);
-            LeftStateManager.setStateVNyan("LZ_LeapFixer_LeftStateManager");
+            LeftStateManager.ManageState(getSettings(), LeapFixerFrame);
+            LeftStateManager.setStateVNyan(getSettings(), "LZ_LeapFixer_LeftStateManager");
 
-            RightStateManager.ManageState(LeapFixerFrame);
-            RightStateManager.setStateVNyan("LZ_LeapFixer_RightStateManager");
+            RightStateManager.ManageState(getSettings(), LeapFixerFrame);
+            RightStateManager.setStateVNyan(getSettings(), "LZ_LeapFixer_RightStateManager");
 
             // Apply bones if they exist in bonerotations
-            updateBoneRotations(LeftArmBones);
-            updateBoneRotations(RightArmBones);
+            updateBoneRotations(getSettings().getLeftArmBones());
+            updateBoneRotations(getSettings().getRightArmBones());
         }
     }
 }

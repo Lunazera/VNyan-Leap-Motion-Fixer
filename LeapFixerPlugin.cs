@@ -89,13 +89,13 @@ namespace Leap_Motion_Fixer
                 setInitialValue(paramNameBoost, boost);
             }
 
-            LeapFixerLayer.settings.setLayerOnOff(LayerActive);
-            LeapFixerLayer.settings.setTimeout(timeout);
-            LeapFixerLayer.settings.setTransitionTime(transitionTime);
-            LeapFixerLayer.settings.setSensitivity(sensitivity);
-            LeapFixerLayer.settings.setSlerpAmount(smoothing, smoothingScale);
-            LeapFixerLayer.settings.setSlerpAmount2(smoothing2, smoothingScale);
-            LeapFixerLayer.settings.setSlerpBoost(boost, boostScale);
+            getLayerSettings().setLayerOnOff(LayerActive);
+            getLayerSettings().setTimeout(timeout);
+            getLayerSettings().setTransitionTime(transitionTime);
+            getLayerSettings().setSensitivity(sensitivity);
+            getLayerSettings().setSlerpAmount(smoothing, smoothingScale);
+            getLayerSettings().setSlerpAmount2(smoothing2, smoothingScale);
+            getLayerSettings().setSlerpBoost(boost, boostScale);
         }
 
         public void Update()
