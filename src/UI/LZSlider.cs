@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Reflection.Emit;
-using Leap_Motion_Fixer;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using VNyanInterface;
 
-namespace Leap_Motion_Fixer
+namespace LZLeapMotionFixer
 {
     class LZSlider : MonoBehaviour
     {
+        [Header("Setting Labels")]
+        [Tooltip("Setting name to be shown in plugin UI")]
         [SerializeField] private string settingName;
-        [Header("VNyan Parameter Name")]
-        [SerializeField] private string paramName;
+
+        [Tooltip("Setting name to be used in VNyan and settings JSON")]
+        [SerializeField] private string vnyanParamName;
         private float paramValue = 0f;
 
         private TMP_Text textLabel;
@@ -36,22 +38,25 @@ namespace Leap_Motion_Fixer
                 changeThemeSettings();
                 VNyanInterface.VNyanInterface.VNyanUI.colorThemeChanged += changeThemeSettings; // Re-init colors when this event fires
 
-                if (LZUIManager.getSettingsDict().TryGetValue(paramName, out string value))
+                if (LZUIManager.getSettingsDict().TryGetValue(vnyanParamName, out string value))
                 {
                     paramValue = Convert.ToSingle(value);
                     mainField.text = value;
                     mainSlider.value = paramValue * 10f;
-                    VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(paramName, paramValue);
+                    VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(vnyanParamName, paramValue);
                 }
                 else
                 {
-                    LZUIManager.addSettingsDictFloat(paramName, paramValue);
+                    LZUIManager.addSettingsDictFloat(vnyanParamName, paramValue);
                     mainField.text = Convert.ToString(paramValue);
                     mainSlider.value = paramValue * 10f;
                 }
             }
         }
 
+        /// <summary>
+        /// Method to change colours of the UI's visual components 
+        /// </summary>
         public void changeThemeSettings()
         {
             Color32 TextColor = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
@@ -89,7 +94,7 @@ namespace Leap_Motion_Fixer
         private void sliderChangedCheck()
         {
             paramValue = mainSlider.value * 0.1f;
-            LZUIManager.setSettingsDictFloat(paramName, paramValue);
+            LZUIManager.setSettingsDictFloat(vnyanParamName, paramValue);
 
             if (float.TryParse(mainField.text, out float value))
             {

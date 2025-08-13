@@ -1,33 +1,40 @@
 ﻿using System;
-using Leap_Motion_Fixer;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using VNyanInterface;
 
-namespace Leap_Motion_Fixer
+namespace LZLeapMotionFixer
 {
     class LZMainWindow : MonoBehaviour, IDragHandler, IPointerDownHandler
     {
         [Header("Plugin Manifest")]
-        [SerializeField] private string PluginVersion = "v2.1";
-        [SerializeField] private string PluginTitle = "Tracking Smoothing";
+        [SerializeField] private string PluginVersion = "v0";
+        [SerializeField] private string PluginTitle = "";
         [SerializeField] private string PluginAuthor = "Lunazera";
-        [SerializeField] private string PluginWebsite = "https://github.com/Lunazera/VNyan-Tracking-Smoothing";
+        [SerializeField] private string PluginWebsite = "https://github.com/Lunazera/";
 
         [Header("Window Components")]
+        [Tooltip("Object for background and outline")]
         [SerializeField] private GameObject Background;
+        [Tooltip("Text for plugin title")]
         [SerializeField] private TMP_Text Title;
+        [Tooltip("Text for version and author credit")]
         [SerializeField] private TMP_Text Version;
+        [Tooltip("Free text field 1")]
         [SerializeField] private TMP_Text Desc1;
+        [Tooltip("Free text field 2")]
         [SerializeField] private TMP_Text Desc2;
 
         [Header("Close Button")]
+        [Tooltip("Top right close button")]
         [SerializeField] private Button closeButton;
 
-        [Header("Plugin Window Prefab")]
+        [Header("Plugin Window")]
+        [Tooltip("Prefab for main UI window.")]
         [SerializeField] private GameObject windowPrefab;
+
 
         private RectTransform mainRect;
         private Button VersionURLButton;
@@ -55,20 +62,6 @@ namespace Leap_Motion_Fixer
             }
         }
 
-        public void changeThemeSettings()
-        {
-            // Set UI Colors from VNyan
-            Background.GetComponent<Image>().color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Panel));
-            Background.GetComponent<Outline>().effectColor = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Borders));
-            Title.color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
-            Version.color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
-            Desc1.color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
-            Desc2.color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
-            closeButton.GetComponent<Image>().color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Panel));
-            closeButton.GetComponent<Outline>().effectColor = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Borders));
-            closeButton.GetComponentInChildren<TMP_Text>().color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
-        }
-
         public void OnDrag(PointerEventData eventData)
         {
             mainRect.anchoredPosition += eventData.delta;
@@ -85,6 +78,23 @@ namespace Leap_Motion_Fixer
         public void VersionClicked()
         {
             Application.OpenURL(PluginWebsite);
+        }
+
+        /// <summary>
+        /// Method to change colours of the UI's visual components 
+        /// </summary>
+        public void changeThemeSettings()
+        {
+            // Set UI Colors from VNyan
+            Background.GetComponent<Image>().color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Panel));
+            Background.GetComponent<Outline>().effectColor = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Borders));
+            Title.color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
+            Version.color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
+            Desc1.color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
+            Desc2.color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
+            closeButton.GetComponent<Image>().color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Panel));
+            closeButton.GetComponent<Outline>().effectColor = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Borders));
+            closeButton.GetComponentInChildren<TMP_Text>().color = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Text));
         }
     }
 }

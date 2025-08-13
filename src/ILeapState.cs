@@ -4,7 +4,7 @@ using System.Runtime;
 using System.Text;
 using VNyanInterface;
 
-namespace Leap_Motion_Fixer
+namespace LZLeapMotionFixer
 {
     public interface ILeapState
     {
@@ -19,7 +19,10 @@ namespace Leap_Motion_Fixer
         public void resetStatusTimer(LeapFixerSettings settings);
         public void setState(LeapFixerSettings settings, float state);
 
+        public float getFreeze(LeapFixerSettings settings);
+
         public void setStateVNyan(LeapFixerSettings settings, string ParamName) { }
+        public void setMotionDetectParam(LeapFixerSettings settings, float ParamName) { }
         public void ManageState(LeapFixerSettings settings, PoseLayerFrame Frame) { }
 
         public void OffState(LeapFixerSettings settings, PoseLayerFrame Frame);

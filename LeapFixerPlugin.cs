@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using VNyanInterface;
 
-namespace Leap_Motion_Fixer
+namespace LZLeapMotionFixer
 {
     /// <summary>
     /// Maintains main plugin parameters and settings
@@ -15,52 +15,62 @@ namespace Leap_Motion_Fixer
         private float LayerActive = 1f;
 
         [SerializeField] private string paramNameSensitivity = "LZ_LeapFixer_Sensitivity";
-        private float sensitivity = 1f;
+        private float sensitivity = 5f;
 
         [SerializeField] private string paramNameTimeout = "LZ_LeapFixer_Timeout";
-        private float timeout = 500f;
+        private float timeout = 800f;
 
         [SerializeField] private string paramNameTransitionTime = "LZ_LeapFixer_TransitionTime";
-        private float transitionTime = 500f;
+        private float transitionTime = 400f;
+
+        [SerializeField] private string paramNameMirror = "LZ_LeapMirror";
+        private float mirror = 0f;
 
         [Header("Smoothing Settings")]
         [SerializeField] private string paramNameSmoothing = "LZ_LeapFixer_Smoothing";
-        private float smoothing = 10f;
+        private float smoothing = 40f;
         [SerializeField] private string paramNameSmoothingUnstable = "LZ_LeapFixer_SmoothingUnstable";
-        private float smoothing2 = 10f;
+        private float smoothing2 = 80f;
         [Tooltip("New scale for Smoothing slider (rescales 0-100 slider -> value-0)")]
         [SerializeField] private float smoothingScale = 10f;
 
         [SerializeField] private string paramNameBoost = "LZ_LeapFixer_Boost";
-        private float boost = 10f;
+        private float boost = 50f;
         [Tooltip("Scale for Boost slider (Should be small, like < 0.1f)")]
         [SerializeField] private float boostScale = 0.01f;
 
-        private static LeapFixerLayer LeapFixer = new LeapFixerLayer();
+        private LeapFixerLayer zLeapFixer = new LeapFixerLayer();
 
         /// <summary>
         /// Access to Leap Fixer Layer settings. Runs the getSettings() method from LeapFixer.
         /// </summary>
         /// <returns>LeapFixerSettings settings</returns>
-        public static LeapFixerSettings getLayerSettings()
+        public LeapFixerSettings getLayerSettings()
         {
-            return LeapFixer.getSettings();
+            return zLeapFixer.getSettings();
         }
 
         /// <summary>
         /// Access to LeapFixerPlugin's instantiation of the leap fixer layer
         /// </summary>
         /// <returns></returns>
-        public static LeapFixerLayer getFixerLayer()
+        public LeapFixerLayer getFixerLayer()
         {
-            return LeapFixer;
+            return zLeapFixer;
         }
 
-        public static void setInitialValue(string paramName, float value)
+        public void setInitialValue(string paramName, float value)
         {
             float checkValue = value;
-            checkValue = LZUIManager.getSettingsDictFloat(paramName, value);
-            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(paramName, checkValue);
+            if (LZUIManager.getSettingsDict().TryGetValue(paramName, out string checkVal))
+            {
+                checkValue = Convert.ToSingle(value);
+            }
+            else
+            {
+                LZUIManager.addSettingsDictFloat(paramName, checkValue);
+            }
+                VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(paramName, checkValue);
         }
 
         /// <summary>
@@ -68,7 +78,7 @@ namespace Leap_Motion_Fixer
         /// </summary>
         /// <param name="paramName"></param>
         /// <returns></returns>
-        public static bool checkForNewValue(string paramName, float currentValue)
+        public bool checkForNewValue(string paramName, float currentValue)
         {
             return (!(currentValue == LZUIManager.getSettingsDictFloat(paramName)));
         }
@@ -78,7 +88,7 @@ namespace Leap_Motion_Fixer
             if (!Application.isEditor)
             {
                 // Register pose layer
-                VNyanInterface.VNyanInterface.VNyanAvatar.registerPoseLayer(LeapFixer);
+                VNyanInterface.VNyanInterface.VNyanAvatar.registerPoseLayer(zLeapFixer);
 
                 setInitialValue(paramNameLayerActive, LayerActive);
                 setInitialValue(paramNameTimeout, timeout);
@@ -87,6 +97,7 @@ namespace Leap_Motion_Fixer
                 setInitialValue(paramNameSmoothing, smoothing);
                 setInitialValue(paramNameSmoothingUnstable, smoothing2);
                 setInitialValue(paramNameBoost, boost);
+                setInitialValue(paramNameMirror, mirror);
             }
 
             getLayerSettings().setLayerOnOff(LayerActive);
@@ -96,6 +107,7 @@ namespace Leap_Motion_Fixer
             getLayerSettings().setSlerpAmount(smoothing, smoothingScale);
             getLayerSettings().setSlerpAmount2(smoothing2, smoothingScale);
             getLayerSettings().setSlerpBoost(boost, boostScale);
+            getLayerSettings().setMirror(mirror);
         }
 
         public void Update()
@@ -104,6 +116,12 @@ namespace Leap_Motion_Fixer
             {
                 // Parameter management //
                 // Layer Toggle
+
+                if (checkForNewValue(paramNameMirror, mirror))
+                {
+                    mirror = LZUIManager.getSettingsDictFloat(paramNameMirror);
+                    getLayerSettings().setMirror(mirror);
+                }
 
                 if (checkForNewValue(paramNameLayerActive, LayerActive))
                 {

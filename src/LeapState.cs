@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 using VNyanInterface;
 
-namespace Leap_Motion_Fixer
+namespace LZLeapMotionFixer
 {
     public abstract class State : ILeapState
     {
@@ -15,6 +15,7 @@ namespace Leap_Motion_Fixer
         public abstract List<int> getBoneList(LeapFixerSettings settings);
         public abstract float getState(LeapFixerSettings settings);
         public abstract float getStatus(LeapFixerSettings settings);
+        public abstract float getFreeze(LeapFixerSettings settings);
 
         public abstract float getStatusTimer(LeapFixerSettings settings);
         public abstract float getStatusTrack(LeapFixerSettings settings);
@@ -28,6 +29,8 @@ namespace Leap_Motion_Fixer
         public void OffState(LeapFixerSettings settings, PoseLayerFrame Frame)
         {
             settings.setCurrentBones(getBoneList(settings), Frame.BoneRotation);
+            settings.updateLastNoLeapBones(getStatus(settings), getBoneList(settings));
+            setMotionDetectParam(settings, 0f);
         }
 
         public void OnStateTransition(LeapFixerSettings settings, PoseLayerFrame Frame) 
@@ -35,6 +38,11 @@ namespace Leap_Motion_Fixer
             settings.updateLastLeapBones(getStatus(settings), getBoneList(settings));
             settings.setTargetBones(getBoneList(settings), Frame.BoneRotation);
             settings.rotateTowardsTarget(getBoneList(settings), settings.getSlerpAmount2(), settings.getSlerpBoost());
+            setMotionDetectParam(settings, 1f);
+            if (getFreeze(settings) == 1f)
+            {
+                setState(settings, 6f);
+            }
         }
 
         public void OffStateTransition(LeapFixerSettings settings, PoseLayerFrame Frame)
@@ -42,6 +50,7 @@ namespace Leap_Motion_Fixer
             settings.updateLastLeapBones(getStatus(settings), getBoneList(settings));
             settings.setTargetBones(getBoneList(settings), Frame.BoneRotation);
             settings.rotateTowardsTarget(getBoneList(settings), settings.getSlerpAmount2(), settings.getSlerpBoost());
+            setMotionDetectParam(settings, 0f);
         }
 
         public void OnState(LeapFixerSettings settings, PoseLayerFrame Frame)
@@ -49,6 +58,10 @@ namespace Leap_Motion_Fixer
             settings.updateLastLeapBones(getStatus(settings), getBoneList(settings));
             settings.setTargetBones(getBoneList(settings), Frame.BoneRotation);
             settings.rotateTowardsTarget(getBoneList(settings), settings.getSlerpAmount(), settings.getSlerpBoost());
+            if (getFreeze(settings) == 1f)
+            {
+                setState(settings, 6f);
+            }
         }
 
         public void UnstableState(LeapFixerSettings settings, PoseLayerFrame Frame)
@@ -58,6 +71,10 @@ namespace Leap_Motion_Fixer
                 settings.setTargetBones(getBoneList(settings), settings.getLastLeapBones());
             }
             settings.rotateTowardsTarget(getBoneList(settings), settings.getSlerpAmount2(), 0f);
+            if (getFreeze(settings) == 1f)
+            {
+                setState(settings, 6f);
+            }
         }
 
         public void RecoveryState(LeapFixerSettings settings, PoseLayerFrame Frame)
@@ -65,6 +82,16 @@ namespace Leap_Motion_Fixer
             settings.updateLastLeapBones(getStatus(settings), getBoneList(settings));
             settings.setTargetBones(getBoneList(settings), Frame.BoneRotation);
             settings.rotateTowardsTarget(getBoneList(settings), settings.getSlerpAmount2(), settings.getSlerpBoost());
+            if (getFreeze(settings) == 1f)
+            {
+                setState(settings, 6f);
+            }
+        }
+
+        public void FreezeState(LeapFixerSettings settings, PoseLayerFrame Frame)
+        {
+            settings.setTargetBones(getBoneList(settings), settings.getLastNoLeapBones());
+            settings.rotateTowardsTarget(getBoneList(settings), settings.getSlerpAmount2(), 0f);
         }
 
 
@@ -76,6 +103,9 @@ namespace Leap_Motion_Fixer
         {
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(ParamName, getState(settings));
         }
+
+        public virtual void setMotionDetectParam(LeapFixerSettings settings, float MotionState) { }
+        
 
         public void ManageState(LeapFixerSettings settings, PoseLayerFrame Frame)
         {
@@ -93,7 +123,6 @@ namespace Leap_Motion_Fixer
                     break;
 
                 case 1f: // Stable
-                    resetStatusTimer(settings);
                     if (getStatusTrack(settings) >= settings.getSensitivity())
                     {
                         // If our status tracker has gone above our sensitivity, we'll move to our unstable state
@@ -143,6 +172,7 @@ namespace Leap_Motion_Fixer
                 case 4f: // Transition to On
                     OnStateTransition(settings, Frame);
                     increaseStatusTimer(settings, Time.deltaTime);
+                    // setMotionDetectParam(settings, 1f);
                     if (getStatusTrack(settings) >= settings.getSensitivity())
                     {
                         // If our status tracker has gone above our sensitivity, we'll move to our unstable state
@@ -170,6 +200,7 @@ namespace Leap_Motion_Fixer
                 case 5f: // Transition to Off
                     OffStateTransition(settings, Frame);
                     increaseStatusTimer(settings, Time.deltaTime);
+                    // setMotionDetectParam(settings, 0f);
                     if (getStatusTrack(settings) >= settings.getSensitivity())
                     {
                         // If our status tracker has gone above our sensitivity, we'll move to our unstable state
@@ -193,6 +224,13 @@ namespace Leap_Motion_Fixer
                         }
                     }
                     break;
+                case 6f: // Freeze state
+                    FreezeState(settings, Frame);
+                    if (getFreeze(settings) == 0f)
+                    {
+                        setState(settings, 3f);
+                    }
+                    break;
 
             }
         }
@@ -208,6 +246,8 @@ namespace Leap_Motion_Fixer
         public override void increaseStatusTimer(LeapFixerSettings settings, float time) => settings.increaseLeftStatusTimer(Time.deltaTime);
         public override void resetStatusTimer(LeapFixerSettings settings) => settings.resetLeftStatusTimer();
         public override void setState(LeapFixerSettings settings, float state) => settings.setLeftState(state);
+        public override void setMotionDetectParam(LeapFixerSettings settings, float MotionState) => settings.setVNyanLeftMotionDetect(MotionState);
+        public override float getFreeze(LeapFixerSettings settings) => settings.getVNyanLeftFreeze();
     }
 
     public class RightState : State
@@ -220,5 +260,7 @@ namespace Leap_Motion_Fixer
         public override void increaseStatusTimer(LeapFixerSettings settings, float time) => settings.increaseRightStatusTimer(Time.deltaTime);
         public override void resetStatusTimer(LeapFixerSettings settings) => settings.resetRightStatusTimer();
         public override void setState(LeapFixerSettings settings, float state) => settings.setRightState(state);
+        public override void setMotionDetectParam(LeapFixerSettings settings, float MotionState) => settings.setVNyanRightMotionDetect(MotionState);
+        public override float getFreeze(LeapFixerSettings settings) => settings.getVNyanRightFreeze();
     }
 }

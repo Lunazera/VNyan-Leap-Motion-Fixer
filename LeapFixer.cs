@@ -6,7 +6,7 @@ using LZQuaternions;
 using UnityEngine;
 using VNyanInterface;
 
-namespace Leap_Motion_Fixer
+namespace LZLeapMotionFixer
 {
     public class LeapFixerSettings
     {
@@ -97,13 +97,24 @@ namespace Leap_Motion_Fixer
             setLeftStatus(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapStatusL"));
             setRightStatus(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapStatusR"));
         }
-        public void getVNyanLeapMirror()
-        {
-            setMirror(VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapMirror"));
-        }
 
         public float getVNyanLeftStatusTrack() => (mirror != 1f) ? VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackL") : VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackR");
         public float getVNyanRightStatusTrack() => (mirror != 1f) ? VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackR") : VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_LeapStatusTrackL");
+
+        public float getVNyanLeftFreeze() => (mirror != 1f) ? VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_FreezeL") : VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_FreezeR");
+        public float getVNyanRightFreeze() => (mirror != 1f) ? VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_FreezeR") : VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat("LZ_LeapFixer_FreezeL");
+
+
+        public void setVNyanRightMotionDetect(float state)
+        {
+            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("LeftMotionDetect", state);
+        }
+
+        public void setVNyanLeftMotionDetect(float state)
+        {
+            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat("RightMotionDetect", state);
+
+        }
 
         /// <summary>
         /// Creates VNyanQuaternion Dictionaries given a list of ints
@@ -209,29 +220,15 @@ namespace Leap_Motion_Fixer
         public List<int> getRightArmBones() => RightArm;
         public List<int> getAllBones() => AllBones;
 
-        /* We keep three dictionaries to maintain our setup
-         * "Current" = Internally keeps bone rotations that we will overwrite onto VNyan's bone rotations
-         * "Target" = Rotations we want to smoothly SLERP the current rotations towards
-         * "LastLeap" = We will keep the incoming VNyan rotations here when leap motion is working well. When unstable, we will stop reading into this
-         */
         private static Dictionary<int, VNyanQuaternion> armsCurrent = createQuaternionDictionary(AllBones);
         private static Dictionary<int, VNyanQuaternion> armsTarget = createQuaternionDictionary(AllBones);
         private static Dictionary<int, VNyanQuaternion> armsLastLeap = createQuaternionDictionary(AllBones);
+        private static Dictionary<int, VNyanQuaternion> armsLastNoLeap = createQuaternionDictionary(AllBones);
 
-        public void setCurrentBone(int boneNum, VNyanQuaternion bone)
-        {
-            armsCurrent[boneNum] = bone;
-        }
-
-        public void setTargetBone(int boneNum, VNyanQuaternion bone)
-        {
-            armsTarget[boneNum] = bone;
-        }
-
-        public void setLastLeapBone(int boneNum, VNyanQuaternion bone)
-        {
-            armsLastLeap[boneNum] = bone;
-        }
+        public void setCurrentBone(int boneNum, VNyanQuaternion bone) => armsCurrent[boneNum] = bone;
+        public void setTargetBone(int boneNum, VNyanQuaternion bone) => armsTarget[boneNum] = bone;
+        public void setLastLeapBone(int boneNum, VNyanQuaternion bone) => armsLastLeap[boneNum] = bone;
+        public void setLastNoLeap(int boneNum, VNyanQuaternion bone) => armsLastNoLeap[boneNum] = bone;
 
         public void setCurrentBones(List<int> BoneList, Dictionary<int, VNyanQuaternion> Rotations_In)
         {
@@ -266,15 +263,28 @@ namespace Leap_Motion_Fixer
             }
         }
 
+        public void updateLastNoLeapBones(float status, List<int> BoneList)
+        {
+            if (status == 0f)
+            {
+                foreach (int boneNum in BoneList)
+                {
+                    setLastNoLeap(boneNum, getCurrentBone(boneNum));
+                }
+            }
+        }
+
         public VNyanQuaternion getCurrentBone(int boneNum) => armsCurrent[boneNum];
         public VNyanQuaternion getTargetBone(int boneNum) => armsTarget[boneNum];
         public VNyanQuaternion getLastLeapBone(int boneNum) => armsLastLeap[boneNum];
+        public VNyanQuaternion getLastNoLeapBone(int boneNum) => armsLastNoLeap[boneNum];
 
         /// <summary>
         /// Gets the Last Leap rotations dictionary for left arm.
         /// </summary>
         /// <returns>LeftArmLastLeap</returns>
         public Dictionary<int, VNyanQuaternion> getLastLeapBones() => armsLastLeap;
+        public Dictionary<int, VNyanQuaternion> getLastNoLeapBones() => armsLastNoLeap;
 
 
         public void rotateTowardsTarget(List<int> BoneList, float slerpAmount, float angleScale)
@@ -372,7 +382,6 @@ namespace Leap_Motion_Fixer
             RootPos = LeapFixerFrame.RootPosition;
             RootRot = LeapFixerFrame.RootRotation;
 
-            getSettings().getVNyanLeapMirror();
             getSettings().getVNyanLeapStatus();
 
             LeftStateManager.ManageState(getSettings(), LeapFixerFrame);

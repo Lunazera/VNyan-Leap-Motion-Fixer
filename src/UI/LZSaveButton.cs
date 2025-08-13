@@ -1,18 +1,16 @@
-﻿using System.IO;
-using Leap_Motion_Fixer;
-using Newtonsoft.Json;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using VNyanInterface;
 
-namespace Leap_Motion_Fixer
+namespace LZLeapMotionFixer
 {
     class LZSaveButton : MonoBehaviour
     {
         [Header("Settings File")]
+        [Tooltip("Filename to use for settings JSON. Should be the same as in LZUIManager")]
         [SerializeField] private string settingName;
+
         private Button mainButton;
 
         public void Start()
@@ -39,6 +37,9 @@ namespace Leap_Motion_Fixer
             }
         }
 
+        /// <summary>
+        /// Method to change colours of the UI's visual components 
+        /// </summary>
         public void changeThemeSettings()
         {
             Color32 ButtonColor = LZUIManager.hexToColor(VNyanInterface.VNyanInterface.VNyanUI.getCurrentThemeColor(ThemeComponent.Button));
