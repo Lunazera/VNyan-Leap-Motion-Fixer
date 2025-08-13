@@ -10,6 +10,7 @@ Removes stuttering and noise from your leap motion tracking!
 
 ## How it works
 This lets you apply smoothing to your leap motion tracking, and monitors for when there are many on/off events under a short timespan (which happens when the tracking flickers on and off). When that occurs, it enters an unstable state and freezes your arm's pose until it stabilizes again.
+Make sure you set your Mirror On setting to match what you have in your Leap Motion settings!
 
 ### Smoothing
 Amount of smoothing to apply to your arms
