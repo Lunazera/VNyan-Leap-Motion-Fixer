@@ -1,7 +1,7 @@
 # VNyan Leap Motion Fixer
 Removes stuttering and noise from your leap motion tracking! 
 
-![image of plugin window](https://github.com/Lunazera/VNyan-Leap-Motion-Fixer/blob/main/example.png)
+![image of plugin window](https://github.com/Lunazera/VNyan-Leap-Motion-Fixer/blob/master/example.png)
 
 ## Installation
 1. Download the latest zip file from [releases]([https://github.com/Lunazera/VNyan-Tracking-Detection/releases/](https://github.com/Lunazera/VNyan-Eye-Smoothing/releases))
