@@ -1,7 +1,7 @@
 # VNyan Leap Motion Fixer
-Removes flickering and noise from your leap motion tracking! 
+Removes flickering and noise and adds smoothing to your LeapMotion tracking!
 
-![image of plugin window](https://github.com/Lunazera/VNyan-Leap-Motion-Fixer/blob/master/example.png)
+![Demo of plugin](https://github.com/Lunazera/VNyan-Leap-Motion-Fixer/blob/master/Plugin_demo.gif)
 
 ## Installation
 1. Download the latest zip file from [releases]([https://github.com/Lunazera/VNyan-Tracking-Detection/releases/](https://github.com/Lunazera/VNyan-Eye-Smoothing/releases))
@@ -12,6 +12,8 @@ Make sure you set your Mirror On setting to match what you have in your Leap Mot
 
 ## How it works
 This lets you apply smoothing to your leap motion tracking, and monitors for when there are many on/off events under a short timespan (which happens when the tracking flickers on and off). When that occurs, it enters an unstable state and freezes your arm's pose until it stabilizes again.
+
+![image of plugin window](https://github.com/Lunazera/VNyan-Leap-Motion-Fixer/blob/master/example.png)
 
 ### Smoothing
 Amount of smoothing to apply to your arms
