@@ -1,12 +1,12 @@
 # VNyan Leap Motion Fixer
-Removes stuttering and noise from your leap motion tracking! 
+Removes flickering and noise from your leap motion tracking! 
 
 ![image of plugin window](https://github.com/Lunazera/VNyan-Leap-Motion-Fixer/blob/master/example.png)
 
 ## Installation
 1. Download the latest zip file from [releases]([https://github.com/Lunazera/VNyan-Tracking-Detection/releases/](https://github.com/Lunazera/VNyan-Eye-Smoothing/releases))
 2. Unzip the contents in your VNyan folder under `Items/Assemblies`.
-3. Add the graph to your VNyan as well
+3. Add the ![graph](LeapFixerGraph.json) to your VNyan as well
 4. When VNyan loads, you should see the plugin under the Plugins menu. You can open it and change settings there.
 Make sure you set your Mirror On setting to match what you have in your Leap Motion settings!
 
