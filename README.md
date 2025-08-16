@@ -1,5 +1,5 @@
 # VNyan Leap Motion Fixer
-Removes stuttering and noise from your leap motion tracking! 
+Removes flickering and noise from your leap motion tracking! 
 
 ![image of plugin window](https://github.com/Lunazera/VNyan-Leap-Motion-Fixer/blob/master/example.png)
 
